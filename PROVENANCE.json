@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "sourceApplicationCommit": "fe48ee6140d9224adf56b4b09efcfdc468ae8aa0",
+  "sourcePath": "harmony-build/ports/materialkolor/MaterialKolorPort.py",
+  "sourceSha256": "1c04e92a40cdfbb0e5833cf2a762e5f4bff7c6696d1187b0c3939970cc453874",
+  "extractedFunctions": [
+    "physical",
+    "load",
+    "record",
+    "write",
+    "copy_exact",
+    "_snapshot_component",
+    "mirror_cache"
+  ],
+  "changes": [
+    "Explicit cache_root, gradle_api and tool_allowlist parameters",
+    "No application or library configuration imports"
+  ],
+  "license": "Apache-2.0",
+  "licenseReview": "Maintainer explicitly approved public Apache-2.0 publication and preservation of original source/author attribution on 2026-10-26.",
+  "sourceRepository": "https://gitee.com/QingShanXiaoShuai/Chunjizhang-Compose",
+  "sourceRecordedAuthor": "Lihb",
+  "licenseDecision": "MIGRATION-TOOLING-LICENSE-20261026"
+}

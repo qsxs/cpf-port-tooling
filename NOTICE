@@ -1,0 +1,11 @@
+CPF port tooling
+
+Original project: Chunjizhang-Compose
+Source repository: https://gitee.com/QingShanXiaoShuai/Chunjizhang-Compose
+Recorded source author: Lihb
+Source path: harmony-build/ports/materialkolor/MaterialKolorPort.py
+Source baseline: fe48ee6140d9224adf56b4b09efcfdc468ae8aa0
+
+Extracted and maintained as independent CPF library build tooling.
+See PROVENANCE.json for the original file hash and extraction scope.
+Published under Apache License 2.0 with the project maintainer approval.

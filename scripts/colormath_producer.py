@@ -1,5 +1,7 @@
 """手动 Actions 的 Colormath producer；只上传已核验 staging，不发布。"""
 from collections import deque
+import gzip
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -25,6 +27,66 @@ def tail(path):
         return ""
     with path.open(encoding="utf-8", errors="replace") as source:
         return "".join(deque(source, maxlen=80)).encode()[-16384:].decode(errors="replace")
+
+
+def stream_digest(stream):
+    hasher = hashlib.sha256()
+    size = 0
+    while True:
+        chunk = stream.read(1024 * 1024)
+        if not chunk:
+            break
+        size += len(chunk)
+        hasher.update(chunk)
+    return {"size": size, "sha256": hasher.hexdigest()}
+
+
+def collect_evidence_file(source, evidence, compressed_files):
+    if source.stat().st_size <= 2 * 1024 * 1024:
+        shutil.copyfile(source, evidence / source.name)
+        return
+
+    original_size = source.stat().st_size
+    destination = evidence / (source.name + ".gz")
+    if (evidence / source.name).exists():
+        raise RuntimeError("Uncompressed evidence already exists: " + source.name)
+    hasher = hashlib.sha256()
+    size = 0
+    with source.open("rb") as original, destination.open("wb") as target:
+        with gzip.GzipFile(filename="", mode="wb", fileobj=target, mtime=0) as archive:
+            while True:
+                chunk = original.read(1024 * 1024)
+                if not chunk:
+                    break
+                archive.write(chunk)
+                hasher.update(chunk)
+                size += len(chunk)
+    original_info = {"size": size, "sha256": hasher.hexdigest()}
+    if size != original_size or source.stat().st_size != original_size:
+        raise RuntimeError("Evidence changed during collection: " + source.name)
+
+    with destination.open("rb") as compressed:
+        with gzip.GzipFile(fileobj=compressed, mode="rb") as restored:
+            if stream_digest(restored) != original_info:
+                raise RuntimeError("Compressed evidence verification failed: " + source.name)
+    with destination.open("rb") as compressed:
+        compressed_info = stream_digest(compressed)
+    compressed_files.append({
+        "sourceName": source.name,
+        "archiveName": destination.name,
+        "originalSize": original_info["size"],
+        "originalSha256": original_info["sha256"],
+        "compressedSize": compressed_info["size"],
+        "compressedSha256": compressed_info["sha256"],
+    })
+
+
+def mark_evidence_failure(state, failed, error):
+    state["evidenceError"] = str(error)
+    if failed is None:
+        state["status"] = "FAILED_EVIDENCE_COLLECTION"
+        return error
+    return failed
 
 
 def main():
@@ -85,6 +147,7 @@ def main():
         state.update(status="FAILED", error=str(error))
     finally:
         try:
+            compressed_files = []
             for stage in ("BootstrapNative", *STAGES):
                 for stream in ("stdout", "stderr"):
                     for source in (output / "logs" / (stage + "." + stream + ".log"), work / "logs" / (stage + "." + stream + ".log")):
@@ -97,17 +160,14 @@ def main():
             for source in (work / "publication.json", work / "source-manifest.json", work / "task-discovery.json",
                            output / "native-bootstrap/bootstrap-receipt.json", colormath / "ohos/tooling-lock.json"):
                 if source.is_file():
-                    if source.stat().st_size > 2 * 1024 * 1024:
-                        raise RuntimeError("Evidence exceeds 2 MiB: " + source.name)
-                    shutil.copyfile(source, evidence / source.name)
+                    collect_evidence_file(source, evidence, compressed_files)
             if (work / "evidence").is_dir():
                 for source in (work / "evidence").glob("*.json"):
-                    if source.stat().st_size > 2 * 1024 * 1024:
-                        raise RuntimeError("Evidence exceeds 2 MiB: " + source.name)
-                    shutil.copyfile(source, evidence / source.name)
+                    collect_evidence_file(source, evidence, compressed_files)
+            if compressed_files:
+                write(evidence / "evidence-index.json", {"schemaVersion": 1, "compressedFiles": compressed_files})
         except Exception as error:
-            failed = error
-            state.update(status="FAILED_EVIDENCE_COLLECTION", evidenceError=str(error))
+            failed = mark_evidence_failure(state, failed, error)
         state["finished"] = time.time()
         write(evidence / "run.json", state)
     print(json.dumps(state, ensure_ascii=False))

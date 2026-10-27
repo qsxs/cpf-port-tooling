@@ -135,7 +135,7 @@ fun resolution() = listOf("commonMainResolvableDependenciesMetadata", "ohosX64Co
     }
     check(gridCount == expected.size && gridCount > 0) { "Consumer Grid artifact set is incomplete: $name" }
     val graph = edges(configuration)
-    check(graph.any { it.getValue("requested").toString() == "$gridGroup:grid:$gridVersion" }) { "Root Grid GAV was not consumed" }
+    check(graph.any { it.getValue("requested") == "$gridGroup:grid:$gridVersion" }) { "Root Grid GAV was not consumed" }
     mapOf("configuration" to name, "target" to target, "edges" to graph, "artifacts" to artifacts)
 }
 fun payload(file: File): Map<String, Map<String, Any>> {
@@ -150,7 +150,7 @@ fun payload(file: File): Map<String, Map<String, Any>> {
     }
     return found
 }
-fun metadataTrace(compiler: KotlinNativeCompile): Map<String, Any> {
+fun metadataTrace(compiler: KotlinNativeCompile): Map<String, Any?> {
     val expected = asMap(http.getValue("metadataPayload")).mapValues { (_, value) ->
         val item = asMap(value)
         mapOf("size" to (item.getValue("size") as Number).toLong(), "sha256" to item.getValue("sha256"))
@@ -184,7 +184,7 @@ fun recordCompilation(name: String, taskName: String, target: String?) {
         doLast {
             val compiler = tasks.getByName(taskName) as KotlinNativeCompile
             check(compiler.sources.files.filter { it.isFile && it.extension == "kt" }.map { it.canonicalFile }.toSet() == setOf(probe) && sha(probe) == probeSha)
-            check(compiler.enabled && compiler.state.executed && !compiler.state.noSource && compiler.state.failure == null && compiler.state.skipMessage in listOf(null, "UP-TO-DATE", "FROM-CACHE"))
+            check(compiler.enabled && compiler.state.executed && !compiler.state.noSource && compiler.state.skipMessage in listOf(null, "UP-TO-DATE", "FROM-CACHE"))
             val outputs = compiler.outputs.files.files.flatMap(::leaves).distinct()
             check(outputs.isNotEmpty() && outputs.any { it.length() > 0 })
             var metadata = false

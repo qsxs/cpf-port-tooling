@@ -56,17 +56,18 @@ def collect_evidence(output, grid, work):
                     (evidence / (label + ".gradle-" + stream + "-tail.log")).write_text(text, encoding="utf-8")
         if work is not None:
             copy_small(work / "invocations" / (label + "-1.json"), evidence / "invocations" / (label + "-1.json"))
-    for name in ("port-config.json", "metadata-toolchain.json", "commonizer-toolchain.json", "compiler-plugin-toolchain.json", "tooling-lock.json", "bootstrap-linux.json"):
+    for name in ("port-config.json", "metadata-toolchain.json", "commonizer-toolchain.json", "compiler-plugin-toolchain.json", "native-compiler-toolchain.json", "tooling-lock.json", "bootstrap-linux.json"):
         copy_small(grid / "ohos" / name, evidence / "locks" / name)
     copy_small(output / "native-bootstrap/bootstrap-receipt.json", evidence / "native-bootstrap-receipt.json")
     if work is not None:
         for name in ("publication.json", "source-manifest.json", "task-discovery.json"):
             copy_small(work / name, evidence / name)
+        copy_small(work / "evidence/native-compiler-host.json", evidence / "native-compiler-host.json")
         for stage in ("resolve", "metadata", "native-x64", "native-arm64"):
             source = work / "evidence" / (stage + ".json")
             if source.is_file():
                 data = json.loads(source.read_text(encoding="utf-8"))
-                summary = {key: data[key] for key in ("fingerprint", "stage", "sourceCount", "sourceSetSha256", "producers", "metadataLauncher", "commonizer", "compilerPlugins") if key in data}
+                summary = {key: data[key] for key in ("fingerprint", "stage", "sourceCount", "sourceSetSha256", "producers", "metadataLauncher", "commonizer", "compilerPlugins", "nativeCompiler") if key in data}
                 if "configurations" in data:
                     summary["configurationCounts"] = [{"name": item["configuration"], "edges": len(item["edges"]), "artifacts": len(item["artifacts"])} for item in data["configurations"]]
                 write_json(evidence / (stage + "-summary.json"), summary)

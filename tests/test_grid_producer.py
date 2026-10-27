@@ -25,6 +25,7 @@ class ProducerTest(unittest.TestCase):
         self.root = Path(tempfile.mkdtemp(prefix="grid-ci-check-", dir=local))
         self.grid, self.output = self.root / "grid", self.root / "output"
         (self.grid / "ohos").mkdir(parents=True)
+        (self.grid / "ohos/native-compiler-toolchain.json").write_text('{"scope":"TEST_ONLY_HOST_LOCK"}', encoding="utf-8")
         self.work = self.output / "work/grid-test"
         self.work.mkdir(parents=True)
         self.calls = []
@@ -54,6 +55,11 @@ class ProducerTest(unittest.TestCase):
             kwargs["stderr"].write(b"stub stage failure")
             return SimpleNamespace(returncode=42)
         kwargs["stdout"].write(json.dumps({"work": str(self.work), "fingerprint": "f" * 64, "stage": stage}).encode())
+        if stage == "Resolve":
+            (self.work / "evidence").mkdir(exist_ok=True)
+            (self.work / "evidence/resolve.json").write_text('{"nativeCompiler":{"configuration":"kotlinCompilerClasspath","artifacts":[]}}', encoding="utf-8")
+        if stage == "NativeArm64":
+            (self.work / "evidence/native-compiler-host.json").write_text('{"scope":"TEST_ONLY_HOST_RECEIPT"}', encoding="utf-8")
         if stage == "Verify":
             (self.work / "publication.json").write_text('{"status":"TEST_ONLY_VERIFIED"}', encoding="utf-8")
         return SimpleNamespace(returncode=0)
@@ -73,6 +79,10 @@ class ProducerTest(unittest.TestCase):
         manifest = json.loads((self.output / "evidence/run.json").read_text())
         self.assertEqual(manifest["status"], "VERIFIED_STAGING_READY_FOR_MANUAL_REVIEW")
         self.assertTrue((self.output / "evidence/publication.json").is_file())
+        self.assertTrue((self.output / "evidence/locks/native-compiler-toolchain.json").is_file())
+        self.assertTrue((self.output / "evidence/native-compiler-host.json").is_file())
+        summary = json.loads((self.output / "evidence/resolve-summary.json").read_text())
+        self.assertEqual(summary["nativeCompiler"]["configuration"], "kotlinCompilerClasspath")
 
     def test_failure_keeps_bounded_current_stage_diagnostics_and_fails(self):
         self.fail = "Metadata"

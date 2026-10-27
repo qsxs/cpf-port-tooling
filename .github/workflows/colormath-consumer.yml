@@ -1,0 +1,58 @@
+name: Anonymous Colormath Pages consumer
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '已人工发布的不可变 Colormath preview version'
+        required: true
+        type: string
+      source_sha:
+        description: '对应 producer 的完整 40 位 Colormath source SHA'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: controlled-colormath-pages-consumer
+  cancel-in-progress: false
+
+jobs:
+  consumer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout consumer tooling only
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: tooling
+          persist-credentials: false
+      - name: Set up JDK 17
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Python 3.13
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: Verify public graph and compile Color.toHSL
+        shell: bash
+        env:
+          COLORMATH_VERSION: ${{ inputs.version }}
+          COLORMATH_SOURCE_SHA: ${{ inputs.source_sha }}
+          COLORMATH_CONSUMER_OUTPUT: ${{ runner.temp }}/colormath-consumer-${{ github.run_id }}-${{ github.run_attempt }}
+          CI_TOOLING_SHA: ${{ github.sha }}
+          CI_RUN_ID: ${{ github.run_id }}
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: python -B tooling/scripts/colormath_remote_consumer.py
+      - name: Upload bounded consumer evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: colormath-consumer-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/colormath-consumer-${{ github.run_id }}-${{ github.run_attempt }}/evidence/
+          if-no-files-found: warn
+          retention-days: 14

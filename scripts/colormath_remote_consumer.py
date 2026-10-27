@@ -519,6 +519,15 @@ def verify_records(output, native_home, env, mode):
         "compilations": compilations, "link": "NOT_RUN", "runtime": "NOT_RUN"})
 
 
+def read_log_head(path):
+    if not path.is_file():
+        return ""
+    with path.open("rb") as stream:
+        data = stream.read(16 * 1024)
+    text = data.decode("utf-8", errors="replace")
+    return text.encode("utf-8")[:16 * 1024].decode("utf-8", errors="ignore")
+
+
 def main():
     output = Path(os.environ["COLORMATH_CONSUMER_OUTPUT"]).resolve()
     evidence = output / "evidence"
@@ -587,11 +596,21 @@ def main():
     finally:
         for stage in ("BootstrapNative", *STAGES):
             for stream in ("stdout", "stderr"):
-                text = tail(output / "logs" / (stage + "." + stream + ".log"))
+                log_path = output / "logs" / (stage + "." + stream + ".log")
+                text = tail(log_path)
                 if text:
                     (evidence / (stage + "." + stream + "-tail.log")).write_text(text, encoding="utf-8")
                     if state["status"] == "FAILED" and state.get("stage") == stage:
                         print(text, file=sys.stderr)
+                if state["status"] == "FAILED" and state.get("stage") == stage:
+                    try:
+                        prefix = read_log_head(log_path)
+                        if prefix:
+                            (evidence / (stage + "." + stream + "-head.log")).write_text(prefix, encoding="utf-8")
+                    except OSError as error:
+                        state.setdefault("logCaptureWarnings", []).append(
+                            {"stage": stage, "stream": stream, "errorType": type(error).__name__}
+                        )
         for path in evidence.rglob("*"):
             if path.is_file() and path.stat().st_size > 8 * 1024 * 1024:
                 state.update(status="FAILED", error="Consumer structured evidence exceeds 8 MiB")

@@ -271,7 +271,7 @@ def main():
             shutil.copyfile(TEMPLATE / name, target)
         shutil.copyfile(tools / "gradle.properties", project / "gradle.properties")
         probe = project / "src/commonMain/kotlin/GridConsumer.kt"
-        args = ["sh", str(tools / "gradlew"), "-p", str(project), "--console=plain", "--project-cache-dir", str(output / "project-cache"),
+        args = ["sh", str(tools / "gradlew"), "-p", str(project), "--console=plain", "--stacktrace", "--project-cache-dir", str(output / "project-cache"),
                 "-PconsumerTools=" + str(tools), "-PconsumerOutput=" + str(output), "-PconsumerEvidence=" + str(evidence),
                 "-PconsumerHttp=" + str(evidence / "remote-http-manifest.json"), "-PgridVersion=" + version,
                 "-PprobeSha256=" + digest(probe.read_bytes()), "-Pkotlin.native.home=" + str(native),

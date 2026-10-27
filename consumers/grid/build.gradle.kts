@@ -12,8 +12,8 @@ plugins {
     kotlin("multiplatform")
     kotlin("plugin.compose")
 }
-fun readMap(file: File) = (JsonSlurper().parse(file) as Map<*, *>).entries.associate { it.key.toString() to it.value }
-fun asMap(value: Any?) = (value as Map<*, *>).entries.associate { it.key.toString() to requireNotNull(it.value) }
+fun readMap(file: File): Map<String, Any?> = (JsonSlurper().parse(file) as Map<*, *>).entries.associate { it.key.toString() to it.value }
+fun asMap(value: Any?): Map<String, Any?> = (value as Map<*, *>).entries.associate { it.key.toString() to it.value }
 fun digest(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 fun sha(file: File) = digest(file.readBytes())
 fun leaves(file: File): List<File> = if (file.isDirectory) file.walkTopDown().filter(File::isFile).toList() else if (file.isFile) listOf(file) else emptyList()
@@ -85,7 +85,7 @@ fun edges(configuration: Configuration) = configuration.incoming.resolutionResul
     if (edge !is ResolvedDependencyResult) throw GradleException("Unresolved consumer dependency: $edge", (edge as? UnresolvedDependencyResult)?.failure)
     mapOf("from" to edge.from.id.displayName, "requested" to edge.requested.displayName, "selected" to edge.selected.id.displayName)
 }
-fun checkedTools(name: String, fixed: Map<String, Any>, expected: Map<String, Any>): Map<String, Any> {
+fun checkedTools(name: String, fixed: Map<String, Any?>, expected: Map<String, Any?>): Map<String, Any> {
     val configuration = configurations.getByName(name)
     val actual = configuration.resolvedConfiguration.resolvedArtifacts.map { artifact ->
         val id = artifact.moduleVersion.id

@@ -35,6 +35,10 @@ assert 'implementation("$gridGroup:grid:$gridVersion")' in build
 assert 'implementation("$gridGroup:grid-ohos' not in build
 assert 'compiler.compilerPluginClasspath?.files' in build and 'compiler.libraries.files' in build
 assert 'metadataTrace(compiler)' in build and 'sha(probe) == probeSha' in build
+# 可空 JSON 对象是静态类型策略；真实 Kotlin null 回归由下一次云 Resolve 验证。
+assert 'fun readMap(file: File): Map<String, Any?>' in build and 'fun asMap(value: Any?): Map<String, Any?>' in build
+assert 'to requireNotNull(it.value)' not in build and 'fixed: Map<String, Any?>, expected: Map<String, Any?>' in build
+assert '"--stacktrace"' in script
 assert 'Grid artifact differs from anonymous HTTP' in build and 'targets == setOf(target)' in build
 assert 'response.read()' in script and 'TRANSPORT_INCOMPLETE_READ' in script
 assert 'ProxyHandler({})' in script and 'LD_LIBRARY_PATH' in script and 'os.environ.copy()' not in script

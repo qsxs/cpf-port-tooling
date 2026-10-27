@@ -42,3 +42,17 @@ python -B toolchains/kotlin-native/2.4.20-0.1.0-08/bootstrap-native.py --destina
 ```
 
 脚本只下载锁定的 Native 包、核对大小和 SHA256，解压后核实原 `konan.properties` 的 `compilerVersion` 并留下 receipt；不改配置或 sysroot。下载、解压或校验失败时保留现场，重试使用新的隔离输出根；不执行 Gradle/Native 编译。`python -B tests/check_native_08_host.py` 检查四类锁和 POM 闭包，`python -B tests/test_bootstrap_native_08.py` 以保留在 `.local/` 的微型夹具检查版本门禁和失败现场。
+
+## Poko OHOS producer 与匿名 consumer
+
+新增手动 `poko-producer.yml` 只 checkout 工具仓和指定完整 SHA 的 `qsxs/Poko`；`poko-consumer.yml` 只 checkout 工具仓，从 Pages 的 `io.github.qsxs.cpf.poko:poko-annotations` root GAV 选择 metadata 和两 Native leaf。Producer 完整 Verify 后只上传 staging，Pages 仍由维护者人工审核发布。两个工作流均使用 JDK 17、Python 3.13、隔离的 Gradle/Konan/work/temp，不恢复缓存，子进程不传递 Actions 凭据。
+
+工作流运行时所在的工具仓 commit B 与 Poko 端口固定共享工具 commit `d0cff88fd1ea2e4f08bb4409f1c802cca0c7f285` A 分别记录：producer 从固定 A 的公开归档读取 20 个文件并逐项核大小/SHA256；consumer 从 A 的固定 raw URL 逐项读取同一文件身份。Gradle 9.5.0 wrapper 由固定 Grid commit `ed3472803fdb637d601391f62f43aba1bfea551f` 的四项工具文件供 consumer 使用，均核内容，不 checkout Grid 或 Poko 源码。
+
+Gradle 9.5 consumer 使用官方 Poko compiler plugin 0.23.2 和普通 `@Poko` 类，移除该插件自动注入的原 `poko-annotations:0.23.2`，仅声明 Pages 的新 root。它记录匿名 HTTP 字节、GMM owner/available-at、实际变体、metadata 转换、编译输入/输出，并使用该 `.08` Native 分发的 `klib dump-metadata` 与 `dump-metadata-signatures` 检查三个编译输出中的 probe 类自身的 `equals`、`hashCode`、`toString`，双 Native 另检查非空 IR。未检查 Native IR 中各方法的方法体。
+
+同一 workflow 的独立 Gradle 8.11.1 job 对同一公开 root GAV 运行标准 metadata 和双 Native 编译；它不声明、解析或加载 Poko Gradle/compiler 插件，probe 只引用 `Poko` 注解类型，不检查或声称生成成员。两个 job 串行并各有独立工程、Gradle/Konan 和临时目录，不使用 producer 输出或缓存。Gradle 8 的 compiler/commonizer JVM 工具依据实际解析记录，只核同版工具和可对应的既有字节身份，不强制 Gradle 9 的 14 项闭包。
+
+Gradle 8 wrapper JAR 与 properties 的原件来自 App 冻结 commit `35ce89e5f91a23aaa5657c21510afd6ee593fad9` 的 `harmony-build/application-gradle/gradle/wrapper/`，逐文件大小/SHA256 及 Gradle 官方 Apache-2.0 许可来源记录在 `consumers/poko/wrapper-inputs-gradle8.json`；Gradle 8.11.1 官方 distribution SHA256 为 `f397b287023acdba1e9f6fc5ea72d22dd63669d59ed4a289a29b1a76eee151c6`。两种 consumer 结论分别保存，`link=NOT_RUN`、`runtime=NOT_RUN`；当前新工作流尚未实际运行。
+
+轻量来源静态检查：`python -B tests/check_poko_port_static.py <Poko-ohos-directory>`。对应声明检查的语义测试 `python -B tests/test_poko_declarations.py` 仅在授权门禁运行，夹具留在 `.local/`。

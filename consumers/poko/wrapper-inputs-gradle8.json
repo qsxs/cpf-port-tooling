@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "gradleVersion": "8.11.1",
+  "sourceApplicationCommit": "35ce89e5f91a23aaa5657c21510afd6ee593fad9",
+  "sourceRepository": "https://gitee.com/QingShanXiaoShuai/Chunjizhang-Compose",
+  "gradleProject": "https://github.com/gradle/gradle",
+  "gradleLicense": "https://github.com/gradle/gradle/blob/v8.11.1/LICENSE",
+  "distributionUrl": "https://services.gradle.org/distributions/gradle-8.11.1-bin.zip",
+  "distributionSha256": "f397b287023acdba1e9f6fc5ea72d22dd63669d59ed4a289a29b1a76eee151c6",
+  "files": [
+    {
+      "path": "gradle/wrapper/gradle-wrapper.jar",
+      "sourceGitPath": "harmony-build/application-gradle/gradle/wrapper/gradle-wrapper.jar",
+      "size": 59203,
+      "sha256": "e996d452d2645e70c01c11143ca2d3742734a28da2bf61f25c82bdc288c9e637"
+    },
+    {
+      "path": "gradle/wrapper/gradle-wrapper.properties",
+      "sourceGitPath": "harmony-build/application-gradle/gradle/wrapper/gradle-wrapper.properties",
+      "size": 340,
+      "sha256": "1b9cd6961ee86eea17b2f912bddb22030492db23fc6dff07da6c30eccaaab0c4"
+    }
+  ],
+  "license": "Apache-2.0"
+}

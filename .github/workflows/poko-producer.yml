@@ -1,0 +1,76 @@
+name: Controlled Poko OHOS producer
+
+on:
+  workflow_dispatch:
+    inputs:
+      poko_sha:
+        description: 'qsxs/Poko 不可变的完整 40 位提交 SHA'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: controlled-poko-producer
+  cancel-in-progress: false
+
+jobs:
+  producer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Validate immutable source
+        shell: bash
+        env:
+          POKO_SHA: ${{ inputs.poko_sha }}
+        run: |
+          [[ "$POKO_SHA" =~ ^[0-9a-f]{40}$ ]] || { printf '%s\n' 'A full Poko source commit is required' >&2; exit 1; }
+      - name: Checkout workflow tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: tooling
+          persist-credentials: false
+      - name: Checkout Poko source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: qsxs/Poko
+          ref: ${{ inputs.poko_sha }}
+          path: poko
+          persist-credentials: false
+      - name: Set up JDK 17
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Python 3.13
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: Build and verify isolated staging
+        shell: bash
+        env:
+          POKO_SHA: ${{ inputs.poko_sha }}
+          POKO_CHECKOUT: ${{ github.workspace }}/poko
+          POKO_PRODUCER_OUTPUT: ${{ runner.temp }}/poko-producer-${{ github.run_id }}-${{ github.run_attempt }}
+          CI_RUN_ID: ${{ github.run_id }}
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+          CI_TOOLING_SHA: ${{ github.sha }}
+        run: python -B tooling/scripts/poko_producer.py
+      - name: Upload verified Maven staging for manual review
+        if: success()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: poko-maven-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/poko-producer-${{ github.run_id }}-${{ github.run_attempt }}/staging/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+      - name: Upload bounded producer evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: poko-producer-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/poko-producer-${{ github.run_id }}-${{ github.run_attempt }}/evidence/
+          if-no-files-found: warn
+          retention-days: 14

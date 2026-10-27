@@ -1,0 +1,107 @@
+name: Controlled MaterialKolor OHOS producer
+
+on:
+  workflow_dispatch:
+    inputs:
+      materialkolor_sha:
+        description: 'qsxs/MaterialKolor 不可变的完整 40 位提交 SHA'
+        required: true
+        type: string
+
+      poko_version:
+        description: 'poko 已独立消费验证的公开预览版本'
+        required: true
+        type: string
+      poko_source_sha:
+        description: 'poko 对应 producer 的完整 source SHA'
+        required: true
+        type: string
+      poko_root_gmm_sha256:
+        description: 'poko 已验证公开 root GMM 的 SHA256'
+        required: true
+        type: string
+      colormath_version:
+        description: 'colormath 已独立消费验证的公开预览版本'
+        required: true
+        type: string
+      colormath_source_sha:
+        description: 'colormath 对应 producer 的完整 source SHA'
+        required: true
+        type: string
+      colormath_root_gmm_sha256:
+        description: 'colormath 已验证公开 root GMM 的 SHA256'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: controlled-materialkolor-producer
+  cancel-in-progress: false
+
+jobs:
+  producer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Validate immutable source
+        shell: bash
+        env:
+          MATERIALKOLOR_SHA: ${{ inputs.materialkolor_sha }}
+        run: |
+          [[ "$MATERIALKOLOR_SHA" =~ ^[0-9a-f]{40}$ ]] || { printf '%s\n' 'A full MaterialKolor source commit is required' >&2; exit 1; }
+      - name: Checkout workflow tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: tooling
+          persist-credentials: false
+      - name: Checkout MaterialKolor source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: qsxs/MaterialKolor
+          ref: ${{ inputs.materialkolor_sha }}
+          path: materialkolor
+          persist-credentials: false
+      - name: Set up JDK 17
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Python 3.13
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: Build and verify isolated staging
+        shell: bash
+        env:
+          MATERIALKOLOR_SHA: ${{ inputs.materialkolor_sha }}
+          MATERIALKOLOR_POKO_VERSION: ${{ inputs.poko_version }}
+          MATERIALKOLOR_POKO_SOURCE_SHA: ${{ inputs.poko_source_sha }}
+          MATERIALKOLOR_POKO_ROOT_GMM_SHA256: ${{ inputs.poko_root_gmm_sha256 }}
+          MATERIALKOLOR_COLORMATH_VERSION: ${{ inputs.colormath_version }}
+          MATERIALKOLOR_COLORMATH_SOURCE_SHA: ${{ inputs.colormath_source_sha }}
+          MATERIALKOLOR_COLORMATH_ROOT_GMM_SHA256: ${{ inputs.colormath_root_gmm_sha256 }}
+          MATERIALKOLOR_CHECKOUT: ${{ github.workspace }}/materialkolor
+          MATERIALKOLOR_PRODUCER_OUTPUT: ${{ runner.temp }}/materialkolor-producer-${{ github.run_id }}-${{ github.run_attempt }}
+          CI_RUN_ID: ${{ github.run_id }}
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+          CI_TOOLING_SHA: ${{ github.sha }}
+        run: python -B tooling/scripts/materialkolor_producer.py
+      - name: Upload verified Maven staging for manual review
+        if: success()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: materialkolor-maven-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/materialkolor-producer-${{ github.run_id }}-${{ github.run_attempt }}/staging/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+      - name: Upload bounded producer evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: materialkolor-producer-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/materialkolor-producer-${{ github.run_id }}-${{ github.run_attempt }}/evidence/
+          if-no-files-found: warn
+          retention-days: 14

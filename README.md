@@ -1,31 +1,30 @@
 # CPF port tooling
 
-用于固定版本 CPF/OHOS 库端口的最小 Python 标准库工具。提供 `physical/load/record/write/copy_exact` 及完整组件 Maven 快照，不导入应用或其他库的配置。
+固定版本 CPF/OHOS 库端口的最小 Python 标准库工具。提供 `physical/load/record/write/copy_exact` 与完整组件 Maven 快照；不导入应用或其他库配置。维护者已批准 Apache-2.0 公开，原来源、作者 Lihb 及授权说明见 `PROVENANCE.json`/`NOTICE`，许可证不因本次文档收口改变。
 
-`mirror_cache(work, pins, cache_root=..., gradle_api=(9, 5, 0), tool_allowlist=[...])` 只镜像 pins 与显式工具白名单内的组件。`cache_root=None` 生成缺件清单并交给正常远端解析。白名单规则指定 `group` 或 `groupPrefix`、`versions`，可加 `modules`。快照保留原 GMM/POM 字节、available-at 与 URL 布局；完整预判必需文件，遇缺件不暴露半成品。函数不会下载、运行 Gradle 或删除文件。
+`mirror_cache(work, pins, cache_root=..., gradle_api=(9, 5, 0), tool_allowlist=[...])` 只镜像 pins/显式工具白名单内的完整组件，保留原 GMM/POM 字节、available-at 与 URL。缺件交给正常远端解析，不暴露半个组件。`write/copy_exact` 遇既有不同内容会失败；不下载或删除文件。Grid helper 仍锁 [`d063c7c70ffbc3f241d7e8bdd184add33dc9a009`](https://github.com/qsxs/cpf-port-tooling/commit/d063c7c70ffbc3f241d7e8bdd184add33dc9a009) 及逐文件 hash，和下面的工作流提交明确区分。
 
-`write` 与 `copy_exact` 保留不可变输入语义，已有内容不一致会失败。缓存根与 Gradle API 由调用方传入，不能根据工作目录猜测。源说明见 `PROVENANCE.json`。维护者已明确批准采用 Apache-2.0 公开发布；原项目来源和记录作者见 `PROVENANCE.json` 与 `NOTICE`。
+## Grid 已验交付
 
-运行轻量语义检查：`python -B tests/test_tooling.py`。输出保留在仓库 `.local`，不自动清理。消费方必须锁定真实工具 commit 和逐文件 SHA256；尚未提交时允许显式本地目录并核验文件，不能据此声称公开发布通过。
+根坐标：`com.github.qsxs.gridlayout-compose:grid:2.8.0-cpf11-preview-ed3472803fdb-40432726650-1`，公开 Maven 根为 [Pages](https://qsxs.github.io/cpf-maven/)。115 文件/474253B 已逐字节核验；隔离 consumer metadata/双 Native 编译已过，link/runtime 与设备/Android/iOS 回归未执行。Grid 收口文档提交发布后暂停，不迁其他库或修改 App 引用。
 
-## 手动受控 Grid producer
+| 工作流 | 手动输入 | 已验提交与成功记录 |
+| --- | --- | --- |
+| [producer](https://github.com/qsxs/cpf-port-tooling/blob/30c5b7079193ae26440f6dc80fe6047df102348e/.github/workflows/grid-producer.yml) | `grid_sha=ed3472803fdb637d601391f62f43aba1bfea551f` | tooling `30c5b7079193ae26440f6dc80fe6047df102348e`；[40432726650/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40432726650/attempts/1) |
+| [consumer](https://github.com/qsxs/cpf-port-tooling/blob/5ee338b3847ae0395726a46b9d95bb7f8c5fb3e4/.github/workflows/grid-consumer.yml) | `version=2.8.0-cpf11-preview-ed3472803fdb-40432726650-1`、`source_sha=ed3472803fdb637d601391f62f43aba1bfea551f` | tooling `5ee338b3847ae0395726a46b9d95bb7f8c5fb3e4`；[40440852307/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40440852307/attempts/1) |
 
-`.github/workflows/grid-producer.yml` 放在默认分支 `codex/initial-port-tooling`，仅 `workflow_dispatch` 启动。输入固定仓库 `qsxs/gridlayout-compose` 的完整 40 位 commit；版本自动生成为 `2.8.0-cpf11-preview-<SHA12>-<run-id>-<attempt>`，供本次不可覆盖的预览验收。producer `40432726650/1` 已完整通过；版本已由 Root 发布并完成 Pages 全部115文件匿名字节验收，隔离远程 consumer 的真实编译尚待验证。
+工作流位于默认分支 `codex/initial-port-tooling`。表中 commit 是成功时的代码身份；重新运行应先核对所选分支/标签与锁，记录新 tooling SHA。Producer 版本自动含 source SHA12/run id/attempt，重跑生成新版本，不覆盖已发版本；consumer 重验既有版本不改写 GAV。Consumer source_sha 仅是验收标识，其十三份构建工具来自 `toolchain-inputs.json` 固定的 Grid `ed3472803fdb637d601391f62f43aba1bfea551f`，不是 checkout 库源码。
 
-runner 固定 Ubuntu 24.04，显式 JDK17/Python3.13，官方 Actions 均使用已核对的不可变 commit；只读仓库权限，两次 checkout 均关闭凭据持久化，并发一个且不取消正在运行。每次使用独立临时 Gradle/Konan/work/staging，不恢复缓存。producer 不伪造 JitPack 环境，直接调用 Grid 自身 Native bootstrap 和 Prepare→Tasks→Resolve→Metadata→NativeX64→NativeArm64→Publish→Verify；Grid 仍按自身 `d063...` 内容锁匿名取得 helper。
+## 隔离、证据与未验边界
 
-只上传两项 Actions artifacts：完整 Verify 通过的 `staging/` Maven 仓，以及 `evidence/` 下的小 manifest、必要回执与每阶段有界日志尾部。失败也尝试上传 evidence；不上传 Native/Gradle 缓存、整 work 或源码副本。Actions artifact 是中转材料，需要 Root 下载验收，不能视作匿名公共 Maven 分发；不自动部署 Pages。
+两流程均手动、Ubuntu24.04/JDK17/Python3.13、固定官方 Actions commit、contents:read、checkout 不持久化凭据、单并发且不取消运行。不恢复缓存，Gradle/Konan/work/temp 均为每次独立临时目录；子进程只保留必要宿主变量及 LD_LIBRARY_PATH，不转发 Actions/GitHub/GitCode token。
 
-当前临时公开验收目标为独立 `qsxs/cpf-maven` GitHub Pages 仓。Root 完整检查后再手动发布完整 Maven 目录，版本不得覆盖；本工作流不配置 Pages、不向 MavenCentral/R2 部署，也不修改应用引用。App 切换等待 CPF 适配整体完成。
+Producer 直接使用 Grid 的 Native bootstrap 与八阶段 Publish/Verify，只上传完整 `staging/` 和小 `evidence/` 两个 artifact。Root 核对后手动推 Pages 的 `codex/initial-maven` 分支；`--repository` 仅本地 staging，不是 Pages 部署。Actions artifact 不是匿名 Maven 分发；不自动 deploy，不部署 MavenCentral/R2。
 
-## Grid Pages 隔离远程消费者
+Consumer 只 checkout 工具仓，目标 group 只走匿名 Pages，通过 root GMM 选择两 leaf，不直引 leaf、不用 MavenLocal/文件仓/includeBuild/producer work。真实 HTTP/GMM/metadata与双 Klib摘要、Gradle组件/边/attributes、20文件 metadata payload 转换追溯以及三个编译任务的输入/输出已核验。HTTP 完整 read/Content-Length 检查，IncompleteRead 是传输失败，最多三次普通请求，不加 Range 或客户端 fallback。
 
-`grid-consumer.yml` 只 checkout 本工具仓，手动输入 Pages 已发布的具体不可变 `version` 与 producer 的完整 `source_sha`。目标固定为 `https://qsxs.github.io/cpf-maven/` 和 `com.github.qsxs.gridlayout-compose:grid`；producer `40432726650/1` 已通过八阶段，Pages 的 115 文件/474253B 已完成匿名字节验收；consumer 本身尚未实际云编译。
+Consumer 只有一个332B的 `VerticalGrid(SimpleGridCells.Fixed(2))` 编译探针；三个任务同源，metadata 输出3文件、Native各19文件。Grid producer 18份原源/API/注解整体编译，不等于所有 API 已运行。`link=NOT_RUN`、`runtime=NOT_RUN`，无设备或 Android/iOS 回归。前两轮 consumer 失败是私有验收 DSL 类型/冗余诊断和 JSON合法null，已在工具侧修正；标准 consumer metadata 已过，不泛化 Grid producer 公共 metadata CLI 入口为所有库的规则。
 
-新 runner 使用固定官方 Actions/JDK17/Python3.13，不恢复缓存。只按 `consumers/grid/toolchain-inputs.json` 的固定 SHA256 从 Grid commit `ed3472803fdb637d601391f62f43aba1bfea551f` 下载十三份构建工具（锁、wrapper、Native bootstrap）；不 checkout/download Grid 库源、producer work/staging，也不使用 MavenLocal、文件仓或 includeBuild。Native 分发沿原 `.08` bootstrap，随后再核实际 compilerVersion；目标 Grid group 被 Gradle exclusiveContent 限定到匿名 Pages，其余 CPF/插件只走公开远端。
+本机 Windows urllib 对十个大文件出现6890B截断，curl完整匹配；云 consumer 已完整匿名HTTP成功，保留观察，不归因库损坏。今后只有官方真实制品满足双 ABI/API/当时工具链并独立消费通过，才另行决定替换；不编造官方 GAV 或自动升级。
 
-先匿名解析 root GMM/available-at/两 leaf owner，按声明核 root metadata JAR 与双 ABI Klib 的 URL、size/SHA256、target/IR，再由只声明 root GAV 的 Gradle 重新解析。标准 metadata 与 Native x64/arm64 任务先实际发现，探针只调用 `VerticalGrid(SimpleGridCells.Fixed(2))`。证据包括实际组件/边/attributes/文件 SHA、编译器输入/真实非空 metadata/IR 输出；metadata 编译库内容必须可追溯到 HTTP 根档的 commonMain payload，双 Native Grid Klib 必须等于 HTTP 摘要。标准任务没有源码或编译失败会明确失败，不删除注解、不伪造成功；无 UI、设备、可执行链接或运行验收。
-
-工作流仅上传非隐藏 `evidence/`，含 HTTP/GMM/工具来源、解析/编译/metadata trace 与有界日志；不上传 Native/Gradle缓存或下载数据目录。consumer 子进程只保留必要宿主变量（包括 LD_LIBRARY_PATH），排除 Actions/GitHub/GitCode token；HTTP 客户端不发送 Authorization/Cookie，不使用认证代理环境；完整读取并核 Content-Length，IncompleteRead 单列为传输失败，最多三次正常请求重试，不拼装 Range 或把部分响应当制品摘要变化。
-
-本批语义测试合并到提交门禁：在本仓运行 `python -B tests/check_grid_consumer_static.py`、`python -B tests/test_grid_remote_consumer.py`。不运行本机 Gradle/Native。Root 审查提交后，用实际已发布 version 和 source SHA 触发远程 workflow；只有 metadata 与双 ABI 编译证据齐备才标记消费通过，link/runtime 始终单列 `NOT_RUN`。Grid 匿名验收完成后暂停，不迁移其他库或切换 App 引用。
+轻量测试仍只在相应提交门禁按变更运行：`python -B tests/test_tooling.py`、producer/consumer 对应 static 与语义用例。本次纯 Markdown 收口不重复测试或构建，既有 `.local` 证据不自动清理。

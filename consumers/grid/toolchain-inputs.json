@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "sourceRepository": "qsxs/gridlayout-compose",
+  "sourceCommit": "ed3472803fdb637d601391f62f43aba1bfea551f",
+  "policy": "ONLY_FIXED_BUILD_TOOLS_NO_LIBRARY_SOURCE",
+  "files": [
+    {
+      "path": "gradlew",
+      "size": 363,
+      "sha256": "0e96228f9589965a5e171190f69f6e820f128bdae180f7e2acc6e4d65f788ed5",
+      "url": "https://raw.githubusercontent.com/qsxs/gridlayout-compose/ed3472803fdb637d601391f62f43aba1bfea551f/ohos/gradlew"
+    },
+    {
+      "path": "gradle/wrapper/gradle-wrapper.jar",
+      "size": 43764,
+      "sha256": "7d3a4ac4de1c32b59bc6a4eb8ecb8e612ccd0cf1ae1e99f66902da64df296172",
+      "url": "https://raw.githubusercontent.com/qsxs/gridlayout-compose/ed3472803fdb637d601391f62f43aba1bfea551f/ohos/gradle/wrapper/gradle-wrapper.jar"
+    },
+    {
+      "path": "gradle/wrapper/gradle-wrapper.properties",
+      "size": 339,
+      "sha256": "93b4f2c5ddcfc9e6f630fc7e004b31b389695cd0228be6da42e196e5d4af7acb",
+      "url": "https://raw.githubusercontent.com/qsxs/gridlayout-compose/ed3472803fdb637d601391f62f43aba1bfea551f/ohos/gradle/wrapper/gradle-wrapper.properties"
+    },
+    {
+      "path": "bootstrap-native.py",
+      "size": 3672,
+      "sha256": "616f278d4f4e8b80d74f5403fec7950e6e48ad8a34d53bc39de8758d585c04e5",
+      "url": "https://raw.githubusercontent.com/qsxs/gridlayout-compose/ed3472803fdb637d601391f62f43aba1bfea551f/ohos/bootstrap-native.py"
+    },
+    {
+      "path": "bootstrap-linux.json",
+      "size": 893,
+      "sha256": "44678383dd20e3f9bc5c699e30db28ed72ec0373a38bc8837902e88c00abee00",
+      "url": "https://raw.githubusercontent.com/qsxs/gridlayout-compose/ed3472803fdb637d601391f62f43aba1bfea551f/ohos/bootstrap-linux.json"
+    },
+    {
+      "path": "port-config.json",
+      "size": 2026,
+      "sha256": "3de90c4d7d212b611f7c57fb8da10d4eab845f1f9e329e61715fec2955405bf7",
+      "url": "https://raw.githubusercontent.com/qsxs/gridlayout-compose/ed3472803fdb637d601391f62f43aba1bfea551f/ohos/port-config.json"
+    },
+    {
+      "path": "dependency-pins.json",
+      "size": 8659,
+      "sha256": "a4fe47ccd1d36ef0e85dbbfa50c3fad398160014d2b493dfb2083adfe656a91a",
+      "url": "https://raw.githubusercontent.com/qsxs/gridlayout-compose/ed3472803fdb637d601391f62f43aba1bfea551f/ohos/dependency-pins.json"
+    },
+    {
+      "path": "metadata-pins.json",
+      "size": 818,
+      "sha256": "5342d7affa7e04c201bb58862dda497eb2339c7f2546a683e523fa8c44dbdd62",
+      "url": "https://raw.githubusercontent.com/qsxs/gridlayout-compose/ed3472803fdb637d601391f62f43aba1bfea551f/ohos/metadata-pins.json"
+    },
+    {
+      "path": "metadata-toolchain.json",
+      "size": 2195,
+      "sha256": "db18a9dbf5253532369ee76dd4f62a9160bb3a498b0c33f23aff13720b93b4dd",
+      "url": "https://raw.githubusercontent.com/qsxs/gridlayout-compose/ed3472803fdb637d601391f62f43aba1bfea551f/ohos/metadata-toolchain.json"
+    },
+    {
+      "path": "commonizer-toolchain.json",
+      "size": 1283,
+      "sha256": "fb9ad59f80e8057fdc2422dc4ccacff9d54ea3ad261f83962434812f72d1685b",
+      "url": "https://raw.githubusercontent.com/qsxs/gridlayout-compose/ed3472803fdb637d601391f62f43aba1bfea551f/ohos/commonizer-toolchain.json"
+    },
+    {
+      "path": "compiler-plugin-toolchain.json",
+      "size": 1223,
+      "sha256": "67fb3b78bcd767c83bd10eced7dd64daf1b55b63a09774815ed8c386f43ac900",
+      "url": "https://raw.githubusercontent.com/qsxs/gridlayout-compose/ed3472803fdb637d601391f62f43aba1bfea551f/ohos/compiler-plugin-toolchain.json"
+    },
+    {
+      "path": "native-compiler-toolchain.json",
+      "size": 12577,
+      "sha256": "4c1d515a19c8618be34243205b919301ac716f8d6dc683aa42980b690203802f",
+      "url": "https://raw.githubusercontent.com/qsxs/gridlayout-compose/ed3472803fdb637d601391f62f43aba1bfea551f/ohos/native-compiler-toolchain.json"
+    },
+    {
+      "path": "gradle.properties",
+      "size": 314,
+      "sha256": "993600cfde45bf43788143c6eb2ebab1949c733ef38cc4abc3437c6e2112ed40",
+      "url": "https://raw.githubusercontent.com/qsxs/gridlayout-compose/ed3472803fdb637d601391f62f43aba1bfea551f/ohos/gradle.properties"
+    }
+  ]
+}

@@ -6,7 +6,7 @@
 
 ## Grid 已验交付
 
-根坐标：`com.github.qsxs.gridlayout-compose:grid:2.8.0-cpf11-preview-ed3472803fdb-40432726650-1`，公开 Maven 根为 [Pages](https://qsxs.github.io/cpf-maven/)。115 文件/474253B 已逐字节核验；隔离 consumer metadata/双 Native 编译已过，link/runtime 与设备/Android/iOS 回归未执行。Grid 收口文档提交发布后暂停，不迁其他库或修改 App 引用。
+根坐标：`com.github.qsxs.gridlayout-compose:grid:2.8.0-cpf11-preview-ed3472803fdb-40432726650-1`，公开 Maven 根为 `https://qsxs.github.io/cpf-maven/`（[GitHub 制品仓库](https://github.com/qsxs/cpf-maven)）。115 文件/474253B 已逐字节核验；隔离 consumer metadata/双 Native 编译已过，link/runtime 与设备/Android/iOS 回归未执行。这是 Grid 批次的验收结果；App 引用尚未切换。
 
 | 工作流 | 手动输入 | 已验提交与成功记录 |
 | --- | --- | --- |
@@ -31,7 +31,7 @@ Consumer 只有一个332B的 `VerticalGrid(SimpleGridCells.Fixed(2))` 编译探�
 
 ## Kotlin/Native .08 共享宿主输入
 
-`toolchains/kotlin-native/2.4.20-0.1.0-08/` 从 Grid 固定提交 `ed3472803fdb637d601391f62f43aba1bfea551f` 提取宿主输入；Grid 原 producer/consumer 已通过冷 Linux 验收，本文新增的独立 bootstrap 尚未经过新的云执行。四份锁和 16 份上游 POM 原件保留 Grid 字节与各自 URL、大小及 SHA256，POM 位于 `vendor/`，不会将 JAR、Native 分发包、Android SDK 或缓存放进 Git。来源与原始 blob 的 SHA256 见 `PROVENANCE.json`。
+`toolchains/kotlin-native/2.4.20-0.1.0-08/` 从 Grid 固定提交 `ed3472803fdb637d601391f62f43aba1bfea551f` 提取宿主输入；Grid 原 producer/consumer 已通过冷 Linux 验收；共享 `.08` bootstrap 也已用于下述 Poko 成功云端运行，其他模块仍需独立核验。四份锁和 16 份上游 POM 原件保留 Grid 字节与各自 URL、大小及 SHA256，POM 位于 `vendor/`，不会将 JAR、Native 分发包、Android SDK 或缓存放进 Git。来源与原始 blob 的 SHA256 见 `PROVENANCE.json`。
 
 各 Fork 按实际编译需求分别选用配置：metadata CLI launcher 为 8 项 JVM 输入；标准 commonizer 额外包含自身 1 项并继承这 8 项；Native compiler 使用独立 14 项宿主闭包；只有实际使用 Compose compiler 时才选其单项插件锁。metadata/commonizer 的 annotations 为 13.0，Native compiler 的 annotations 为 23.0.0，不能把一套版本选择强加给另一套，也不能将宿主 JAR 当作库的 runtime 图。Poko 编译插件 0.23.2 不属于这些公共 runtime 依赖。每个 Fork 仍应核对自己的实际解析集合、GAV、大小、SHA256 和配置边；这些锁不会自动注入 repository、凭据、环境变量或 Gradle 配置。
 
@@ -53,6 +53,10 @@ Gradle 9.5 consumer 使用官方 Poko compiler plugin 0.23.2 和普通 `@Poko` �
 
 同一 workflow 的独立 Gradle 8.11.1 job 对同一公开 root GAV 运行标准 metadata 和双 Native 编译；它不声明、解析或加载 Poko Gradle/compiler 插件，probe 只引用 `Poko` 注解类型，不检查或声称生成成员。两个 job 串行并各有独立工程、Gradle/Konan 和临时目录，不使用 producer 输出或缓存。Gradle 8 的 compiler/commonizer JVM 工具依据实际解析记录，只核同版工具和可对应的既有字节身份，不强制 Gradle 9 的 14 项闭包。
 
-Gradle 8 wrapper JAR 与 properties 的原件来自 App 冻结 commit `35ce89e5f91a23aaa5657c21510afd6ee593fad9` 的 `harmony-build/application-gradle/gradle/wrapper/`，逐文件大小/SHA256 及 Gradle 官方 Apache-2.0 许可来源记录在 `consumers/poko/wrapper-inputs-gradle8.json`；Gradle 8.11.1 官方 distribution SHA256 为 `f397b287023acdba1e9f6fc5ea72d22dd63669d59ed4a289a29b1a76eee151c6`。两种 consumer 结论分别保存，`link=NOT_RUN`、`runtime=NOT_RUN`；当前新工作流尚未实际运行。
+Gradle 8 wrapper JAR 与 properties 的原件来自 App 冻结 commit `35ce89e5f91a23aaa5657c21510afd6ee593fad9` 的 `harmony-build/application-gradle/gradle/wrapper/`，逐文件大小/SHA256 及 Gradle 官方 Apache-2.0 许可来源记录在 `consumers/poko/wrapper-inputs-gradle8.json`；Gradle 8.11.1 官方 distribution SHA256 为 `f397b287023acdba1e9f6fc5ea72d22dd63669d59ed4a289a29b1a76eee151c6`。两种 consumer 结论分别保存，`link=NOT_RUN`、`runtime=NOT_RUN`。
+
+已验根 GAV 为 `io.github.qsxs.cpf.poko:poko-annotations:0.23.1-cpf11-preview-cbaa758d0b76-40451679040-1`。[producer 40451679040/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40451679040/attempts/1) 使用 [Poko source `cbaa758d0b76`](https://github.com/qsxs/Poko/commit/cbaa758d0b7610e0e445b8fd50739aa05afaea6e) 和[工作流提交 B `be203a175c85`](https://github.com/qsxs/cpf-port-tooling/commit/be203a175c8592bea3b13819e4fa31a666438c07)；共享宿主工具内容锁 A 为 [`d0cff88fd1ea`](https://github.com/qsxs/cpf-port-tooling/commit/d0cff88fd1ea2e4f08bb4409f1c802cca0c7f285)，两者不能混淆。[Pages 制品提交 `7c7abe30bb95`](https://github.com/qsxs/cpf-maven/commit/7c7abe30bb9510d0290794522471cb99469f6dac) 的 110 个文件、158468 字节与 staging 匿名逐字节对齐。
+
+[consumer 第 1 次](https://github.com/qsxs/cpf-port-tooling/actions/runs/40457201932/attempts/1)的 Gradle 8 job 和[第 2 次](https://github.com/qsxs/cpf-port-tooling/actions/runs/40457201932/attempts/2)的 Gradle 9 job 均完成 metadata、OHOS x64 和 arm64 的真实编译；第 2 次两个 job 均报告成功，详细 artifact 核对分别采用 Gradle 8 第 1 次和 Gradle 9 第 2 次。第 1 次 Gradle 9 在下载官方 sysroot 时超时，随后第 2 次成功，不能把第 1 次整体记为成功。只核验 Gradle 9 自有 probe 的三个生成声明签名及 Native 非空 IR，未检查方法体、link、runtime、设备或 Android/iOS 回归。Pages 是临时验收仓，App 尚未切换。
 
 轻量来源静态检查：`python -B tests/check_poko_port_static.py <Poko-ohos-directory>`。对应声明检查的语义测试 `python -B tests/test_poko_declarations.py` 仅在授权门禁运行，夹具留在 `.local/`。

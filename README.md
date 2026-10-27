@@ -28,3 +28,17 @@ Consumer 只有一个332B的 `VerticalGrid(SimpleGridCells.Fixed(2))` 编译探�
 本机 Windows urllib 对十个大文件出现6890B截断，curl完整匹配；云 consumer 已完整匿名HTTP成功，保留观察，不归因库损坏。今后只有官方真实制品满足双 ABI/API/当时工具链并独立消费通过，才另行决定替换；不编造官方 GAV 或自动升级。
 
 轻量测试仍只在相应提交门禁按变更运行：`python -B tests/test_tooling.py`、producer/consumer 对应 static 与语义用例。本次纯 Markdown 收口不重复测试或构建，既有 `.local` 证据不自动清理。
+
+## Kotlin/Native .08 共享宿主输入
+
+`toolchains/kotlin-native/2.4.20-0.1.0-08/` 从 Grid 固定提交 `ed3472803fdb637d601391f62f43aba1bfea551f` 提取宿主输入；Grid 原 producer/consumer 已通过冷 Linux 验收，本文新增的独立 bootstrap 尚未经过新的云执行。四份锁和 16 份上游 POM 原件保留 Grid 字节与各自 URL、大小及 SHA256，POM 位于 `vendor/`，不会将 JAR、Native 分发包、Android SDK 或缓存放进 Git。来源与原始 blob 的 SHA256 见 `PROVENANCE.json`。
+
+各 Fork 按实际编译需求分别选用配置：metadata CLI launcher 为 8 项 JVM 输入；标准 commonizer 额外包含自身 1 项并继承这 8 项；Native compiler 使用独立 14 项宿主闭包；只有实际使用 Compose compiler 时才选其单项插件锁。metadata/commonizer 的 annotations 为 13.0，Native compiler 的 annotations 为 23.0.0，不能把一套版本选择强加给另一套，也不能将宿主 JAR 当作库的 runtime 图。Poko 编译插件 0.23.2 不属于这些公共 runtime 依赖。每个 Fork 仍应核对自己的实际解析集合、GAV、大小、SHA256 和配置边；这些锁不会自动注入 repository、凭据、环境变量或 Gradle 配置。
+
+Linux x86_64 可在隔离输出根显式提供该库锁定的 Kotlin 版本：
+
+```sh
+python -B toolchains/kotlin-native/2.4.20-0.1.0-08/bootstrap-native.py --destination <isolated-bootstrap-root> --kotlin-version 2.4.20-0.1.0-08
+```
+
+脚本只下载锁定的 Native 包、核对大小和 SHA256，解压后核实原 `konan.properties` 的 `compilerVersion` 并留下 receipt；不改配置或 sysroot。下载、解压或校验失败时保留现场，重试使用新的隔离输出根；不执行 Gradle/Native 编译。`python -B tests/check_native_08_host.py` 检查四类锁和 POM 闭包，`python -B tests/test_bootstrap_native_08.py` 以保留在 `.local/` 的微型夹具检查版本门禁和失败现场。

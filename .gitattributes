@@ -1,3 +1,6 @@
 * text=auto eol=lf
 *.bat text eol=lf
 *.jar binary
+
+# Versioned vendor POMs are upstream evidence; preserve their original bytes.
+toolchains/kotlin-native/2.4.20-0.1.0-08/vendor/** -text

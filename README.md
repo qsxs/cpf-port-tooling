@@ -45,7 +45,7 @@ python -B toolchains/kotlin-native/2.4.20-0.1.0-08/bootstrap-native.py --destina
 
 ## Poko OHOS producer 与匿名 consumer
 
-新增手动 `poko-producer.yml` 只 checkout 工具仓和指定完整 SHA 的 `qsxs/Poko`；`poko-consumer.yml` 只 checkout 工具仓，从 Pages 的 `io.github.qsxs.cpf.poko:poko-annotations` root GAV 选择 metadata 和两 Native leaf。Producer 完整 Verify 后只上传 staging，Pages 仍由维护者人工审核发布。两个工作流均使用 JDK 17、Python 3.13、隔离的 Gradle/Konan/work/temp，不恢复缓存，子进程不传递 Actions 凭据。
+新增手动 `poko-producer.yml` 只 checkout 工具仓和指定完整 SHA 的 `qsxs/Poko`；`poko-consumer.yml` 只 checkout 工具仓，从 Pages 的 `io.github.qsxs.cpf.poko:poko-annotations` root GAV 选择 metadata 和两 Native leaf。Producer 完整 Verify 后上传 staging 和证据，Pages 仍由维护者人工审核发布。两个工作流均使用 JDK 17、Python 3.13、隔离的 Gradle/Konan/work/temp，不恢复缓存，子进程不传递 Actions 凭据。
 
 工作流运行时所在的工具仓 commit B 与 Poko 端口固定共享工具 commit `d0cff88fd1ea2e4f08bb4409f1c802cca0c7f285` A 分别记录：producer 从固定 A 的公开归档读取 20 个文件并逐项核大小/SHA256；consumer 从 A 的固定 raw URL 逐项读取同一文件身份。Gradle 9.5.0 wrapper 由固定 Grid commit `ed3472803fdb637d601391f62f43aba1bfea551f` 的四项工具文件供 consumer 使用，均核内容，不 checkout Grid 或 Poko 源码。
 
@@ -60,3 +60,18 @@ Gradle 8 wrapper JAR 与 properties 的原件来自 App 冻结 commit `35ce89e5f
 [consumer 第 1 次](https://github.com/qsxs/cpf-port-tooling/actions/runs/40457201932/attempts/1)的 Gradle 8 job 和[第 2 次](https://github.com/qsxs/cpf-port-tooling/actions/runs/40457201932/attempts/2)的 Gradle 9 job 均完成 metadata、OHOS x64 和 arm64 的真实编译；第 2 次两个 job 均报告成功，详细 artifact 核对分别采用 Gradle 8 第 1 次和 Gradle 9 第 2 次。第 1 次 Gradle 9 在下载官方 sysroot 时超时，随后第 2 次成功，不能把第 1 次整体记为成功。只核验 Gradle 9 自有 probe 的三个生成声明签名及 Native 非空 IR，未检查方法体、link、runtime、设备或 Android/iOS 回归。Pages 是临时验收仓，App 尚未切换。
 
 轻量来源静态检查：`python -B tests/check_poko_port_static.py <Poko-ohos-directory>`。对应声明检查的语义测试 `python -B tests/test_poko_declarations.py` 仅在授权门禁运行，夹具留在 `.local/`。
+
+## Colormath OHOS producer 与匿名 consumer
+
+[Fork source `86f87c1c333f0eb68af52afc88b73d82a536d6cf`](https://github.com/qsxs/colormath/commit/86f87c1c333f0eb68af52afc88b73d82a536d6cf) 保留上游 [ajalt/colormath 3.6.1](https://github.com/ajalt/colormath/commit/5e776b66ea6ffc5dc5dc360ab88ca5aefbd2a310) 的 45 份原源与 MIT 许可证。已验 GAV 为 `io.github.qsxs.cpf.colormath:colormath:3.6.1-cpf11-preview-86f87c1c333f-40461897858-1`；临时 Maven 根 `https://qsxs.github.io/cpf-maven/`，可查看[根 POM](https://qsxs.github.io/cpf-maven/io/github/qsxs/cpf/colormath/colormath/3.6.1-cpf11-preview-86f87c1c333f-40461897858-1/colormath-3.6.1-cpf11-preview-86f87c1c333f-40461897858-1.pom)或 [GitHub 制品仓库](https://github.com/qsxs/cpf-maven)。
+
+| 已验工作流 | 手动输入 | 本次运行身份 |
+| --- | --- | --- |
+| [producer 历史源码](https://github.com/qsxs/cpf-port-tooling/blob/49d54d239482838dc187ba6b1ce8c9f8cd8231c0/.github/workflows/colormath-producer.yml) | `colormath_sha=86f87c1c333f0eb68af52afc88b73d82a536d6cf` | 工作流 `49d54d239482838dc187ba6b1ce8c9f8cd8231c0`；[40461897858/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40461897858/attempts/1) |
+| [consumer 历史源码](https://github.com/qsxs/cpf-port-tooling/blob/b606affac816befd3b33269e57d9b79b89c31b0f/.github/workflows/colormath-consumer.yml) | `version=3.6.1-cpf11-preview-86f87c1c333f-40461897858-1`、`source_sha=86f87c1c333f0eb68af52afc88b73d82a536d6cf` | 工作流 `b606affac816befd3b33269e57d9b79b89c31b0f`；[40668960640/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40668960640/attempts/1) |
+
+两次运行均将共享工具内容锁 A `d0cff88fd1ea2e4f08bb4409f1c802cca0c7f285` 与各自实际工作流提交区分。Actions 选择器使用当前分支或标签；手动运行前须核对所选 ref 实际指向并记录新运行的 `github.sha`，不能假定当前分支仍指向表中历史提交。需要精确运行历史源码时须选择实际指向该提交的可选 ref。Producer 重跑生成含新 run id/attempt 的版本，仅上传 staging 和证据；维护者核对后手动发布，不能覆盖已验版本。Consumer 可重验已发布 GAV，不改写它。
+
+[Pages 制品提交 `8b5e6932bb24`](https://github.com/qsxs/cpf-maven/commit/8b5e6932bb2490bca64f40e29e1f113090628274) 的 125 个文件、1,106,922 字节与 staging 经匿名 HTTP 逐字节对齐。Consumer 只从公开根 GAV 经 GMM 选择依赖，使用 Gradle 9.5.0 对 `Color.toHSL()` 完成 common metadata、OHOS x64、arm64 真实编译，并核对 9 个公开对象及编译输入。未单独验证 Gradle 8.11.1；link、runtime、设备与 Android/iOS 回归均未运行，App 尚未切换，不能据此认定 MaterialKolor 整体已完成。
+
+保留的失败轨迹：producer [40459063023/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40459063023/attempts/1) 在官方 sysroot 下载超时，证据收集又遇 2 MiB 上限缺陷；`49d54d` 对超限证据做可校验的无损 gzip，并在证据收集出错时保留原始失败，随后 `40461897858/1` 成功。Consumer [40463827222/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40463827222/attempts/1) 的 Native 分发包下载超时，[/2](https://github.com/qsxs/cpf-port-tooling/actions/runs/40463827222/attempts/2) 因 Tasks 失败日志缺少首部而无法定位；`c0abe52ec39ede92238336d7bc1e84dd93789be7` 增加日志采集，[40466510798/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40466510798/attempts/1) 定位到 consumer DSL 中 nullable path；`b606affac816befd3b33269e57d9b79b89c31b0f` 修复后 `40668960640/1` 成功。

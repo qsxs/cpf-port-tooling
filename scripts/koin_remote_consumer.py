@@ -1034,6 +1034,15 @@ def main():
                     (evidence / (stage + "." + stream + "-tail.log")).write_text(content, encoding="utf-8")
                     if state["status"] == "FAILED" and state.get("stage") == stage:
                         print(content, file=sys.stderr)
+                if stream == "stderr" and state["status"] == "FAILED" and state.get("stage") == stage:
+                    try:
+                        prefix = read_log_head(path)
+                        if prefix:
+                            (evidence / (stage + ".stderr-head.log")).write_text(prefix, encoding="utf-8")
+                    except OSError as error:
+                        state.setdefault("logCaptureWarnings", []).append(
+                            {"stage": stage, "stream": stream, "errorType": type(error).__name__}
+                        )
         for path in evidence.rglob("*"):
             if path.is_file() and path.stat().st_size > 8 * 1024 * 1024:
                 state.update(status="FAILED", error="Consumer structured evidence exceeds 8 MiB")

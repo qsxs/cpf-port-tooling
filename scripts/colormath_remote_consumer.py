@@ -293,7 +293,7 @@ fun metadataTrace(compiler: KotlinNativeCompile): Map<String, Any?> {
 fun nativeTrace(compiler: KotlinNativeCompile, target: String): Map<String, Any> {
     val declared = (asMap(http.getValue("nativeArtifacts")).getValue(target) as List<*>).map(::asMap)
     check(declared.size == 1)
-    val expected = payload(file(declared.single().getValue("path")))
+    val expected = payload(file(declared.single().getValue("path")!!))
     check(expected.isNotEmpty())
     val matches = compiler.libraries.files.filter { payload(it) == expected }
     check(matches.size == 1) { "Native compiler library cannot be traced to the Pages leaf: $target" }

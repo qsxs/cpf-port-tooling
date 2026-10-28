@@ -230,7 +230,8 @@ METADATA_PINS = {'androidx.annotation:annotation': '1.9.1',
  'androidx.savedstate:savedstate': '1.5.0',
  'androidx.savedstate:savedstate-compose': '1.5.0',
  'org.jetbrains.compose.ui:ui-uikit': '1.12.0-0.1.0-11',
- 'org.jetbrains.kotlinx:kotlinx-coroutines-bom': '1.11.0-0.1.0-07'}
+ 'org.jetbrains.kotlinx:kotlinx-coroutines-bom': '1.11.0-0.1.0-07',
+ 'org.jetbrains.kotlinx:kotlinx-serialization-bom': '1.11.0-0.1.0-07'}
 COMPOSE_TOOL = {'schemaVersion': 1,
  'compilerVersion': '2.4.20-0.1.0-08',
  'scope': 'HOST_COMPOSE_COMPILER_PLUGIN_ONLY',

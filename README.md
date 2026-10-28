@@ -75,3 +75,32 @@ Gradle 8 wrapper JAR 与 properties 的原件来自 App 冻结 commit `35ce89e5f
 [Pages 制品提交 `8b5e6932bb24`](https://github.com/qsxs/cpf-maven/commit/8b5e6932bb2490bca64f40e29e1f113090628274) 的 125 个文件、1,106,922 字节与 staging 经匿名 HTTP 逐字节对齐。Consumer 只从公开根 GAV 经 GMM 选择依赖，使用 Gradle 9.5.0 对 `Color.toHSL()` 完成 common metadata、OHOS x64、arm64 真实编译，并核对 9 个公开对象及编译输入。未单独验证 Gradle 8.11.1；link、runtime、设备与 Android/iOS 回归均未运行，App 尚未切换，不能据此认定 MaterialKolor 整体已完成。
 
 保留的失败轨迹：producer [40459063023/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40459063023/attempts/1) 在官方 sysroot 下载超时，证据收集又遇 2 MiB 上限缺陷；`49d54d` 对超限证据做可校验的无损 gzip，并在证据收集出错时保留原始失败，随后 `40461897858/1` 成功。Consumer [40463827222/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40463827222/attempts/1) 的 Native 分发包下载超时，[/2](https://github.com/qsxs/cpf-port-tooling/actions/runs/40463827222/attempts/2) 因 Tasks 失败日志缺少首部而无法定位；`c0abe52ec39ede92238336d7bc1e84dd93789be7` 增加日志采集，[40466510798/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40466510798/attempts/1) 定位到 consumer DSL 中 nullable path；`b606affac816befd3b33269e57d9b79b89c31b0f` 修复后 `40668960640/1` 成功。
+
+## MaterialKolor 两模块 producer 与匿名 consumer
+
+上游 [jordond/MaterialKolor 5.0.0](https://github.com/jordond/MaterialKolor/commit/13c67cfa5a724cb6dca7d15674b3ad2acf894853) 的主模块 23 份和 MCI 42 份原源来自 [Fork source `c5ef77766b6098677d541e82f362b666a8a0fff2`](https://github.com/qsxs/MaterialKolor/commit/c5ef77766b6098677d541e82f362b666a8a0fff2)。两模块已验版本均为 `5.0.0-cpf11-preview-c5ef77766b60-40672306467-1`，临时 Maven 根 `https://qsxs.github.io/cpf-maven/`（[主模块根 POM](https://qsxs.github.io/cpf-maven/io/github/qsxs/cpf/materialkolor/material-kolor/5.0.0-cpf11-preview-c5ef77766b60-40672306467-1/material-kolor-5.0.0-cpf11-preview-c5ef77766b60-40672306467-1.pom)、[MCI 根 POM](https://qsxs.github.io/cpf-maven/io/github/qsxs/cpf/materialkolor/material-color-utilities/5.0.0-cpf11-preview-c5ef77766b60-40672306467-1/material-color-utilities-5.0.0-cpf11-preview-c5ef77766b60-40672306467-1.pom)）。
+
+| 已验工作流 | 实际工作流提交 | 运行 |
+| --- | --- | --- |
+| [producer 历史源码](https://github.com/qsxs/cpf-port-tooling/blob/b606affac816befd3b33269e57d9b79b89c31b0f/.github/workflows/materialkolor-producer.yml) | `b606affac816befd3b33269e57d9b79b89c31b0f` | [40672306467/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40672306467/attempts/1) |
+| [consumer 历史源码](https://github.com/qsxs/cpf-port-tooling/blob/abadbfb0b5c33b35dfafdb966e8e759276c5de45/.github/workflows/materialkolor-consumer.yml) | `abadbfb0b5c33b35dfafdb966e8e759276c5de45` | [40675388144/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40675388144/attempts/1) |
+
+两次运行的共享工具内容锁 A 均为 `d0cff88fd1ea2e4f08bb4409f1c802cca0c7f285`，与表中工作流提交 B 区分。Actions 选择器使用当前分支或标签；重跑须核对所选 ref 的实际指向并记录该次 `github.sha`，不能假定当前分支仍指向历史 B。需要精确运行历史源码时须选择实际指向该提交的可选 ref。Producer 成功时上传验收通过的 staging，并另上传证据；维护者核对后手动发布。重跑使用新 run id/attempt 生成新版本，不覆盖已验版本。
+
+本次 producer 输入：
+
+```json
+{"materialkolor_sha":"c5ef77766b6098677d541e82f362b666a8a0fff2","poko_version":"0.23.1-cpf11-preview-cbaa758d0b76-40451679040-1","poko_source_sha":"cbaa758d0b7610e0e445b8fd50739aa05afaea6e","poko_root_gmm_sha256":"297a49f82436065a6091bac3a3a98ad0825731cabdd1a25b0e05866972a88bca","colormath_version":"3.6.1-cpf11-preview-86f87c1c333f-40461897858-1","colormath_source_sha":"86f87c1c333f0eb68af52afc88b73d82a536d6cf","colormath_root_gmm_sha256":"9a518cc72bf41370bcf2848bd2a13b86c1ed6c5a714dad15ab98fde50af5087c"}
+```
+
+本次 consumer 输入：
+
+```json
+{"version":"5.0.0-cpf11-preview-c5ef77766b60-40672306467-1","source_sha":"c5ef77766b6098677d541e82f362b666a8a0fff2"}
+```
+
+[Pages 制品提交 `b2652094e033`](https://github.com/qsxs/cpf-maven/commit/b2652094e03379619138c7ec83ff614d5863a2a1) 的 280 个文件、1,994,693 字节与 staging 经匿名 HTTP 逐字节对齐。Consumer 使用 Gradle 9.5.0，只直接依赖 `material-kolor` 根，通过 GMM 传递解析 MCI、Poko、Colormath；真实主题 API 探针在 common metadata、OHOS x64、arm64 编译，39 条公开 HTTP 记录（38 个不同 URL）与各自 staging 记录对齐。Producer 和 consumer 各检查 54 项：6 个 MCI 类的 `equals`、`hashCode`、`toString` 在三个目标的 metadata 声明及签名，双 Native 另检查 IR 签名与非空 IR。未检查方法体，未单独验证 Gradle 8.11.1 消费；link、runtime、设备和 Android/iOS 回归未运行，App 尚未切换。
+
+许可事实分别为：上游仓库根 LICENSE 与主模块发布 POM 为 MIT；MCI sources JAR 内 LICENSE 为 Apache-2.0，MCI 上游 POM 标注 MIT，而现 CPF MCI POM 沿用旧 OHOS 配置标注 Apache-2.0。原始 POM 与 LICENSE 保留，不推断双许可。
+
+首轮 [40670139990/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40670139990/attempts/1) 的 Gradle `tasks --all` 已成功，随后发现脚本报告缺项；日志未捕获具体缺项。Fork `c5ef77766b6098677d541e82f362b666a8a0fff2` 改为检查带子模块限定的任务名并输出缺项，之后 `40672306467/1` 成功；不能从首轮尾日志断言具体缺项。

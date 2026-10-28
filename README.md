@@ -104,3 +104,20 @@ Gradle 8 wrapper JAR 与 properties 的原件来自 App 冻结 commit `35ce89e5f
 许可事实分别为：上游仓库根 LICENSE 与主模块发布 POM 为 MIT；MCI sources JAR 内 LICENSE 为 Apache-2.0，MCI 上游 POM 标注 MIT，而现 CPF MCI POM 沿用旧 OHOS 配置标注 Apache-2.0。原始 POM 与 LICENSE 保留，不推断双许可。
 
 首轮 [40670139990/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40670139990/attempts/1) 的 Gradle `tasks --all` 已成功，随后发现脚本报告缺项；日志未捕获具体缺项。Fork `c5ef77766b6098677d541e82f362b666a8a0fff2` 改为检查带子模块限定的任务名并输出缺项，之后 `40672306467/1` 成功；不能从首轮尾日志断言具体缺项。
+
+## ColorPicker producer 与匿名 consumer
+
+上游 [skydoves/colorpicker-compose 1.2.0](https://github.com/skydoves/colorpicker-compose/commit/85f81afbccaf5c0837e402686b8db9d67cc74c59) 的 21 份原始 common 源与 Apache-2.0 许可证由 [Fork source `779519a9bc21278c9496a11c43828dc194cbe64c`](https://github.com/qsxs/colorpicker-compose/commit/779519a9bc21278c9496a11c43828dc194cbe64c) 保留。已验根 GAV 为 `io.github.qsxs.cpf.colorpicker:colorpicker-compose:1.2.0-cpf11-preview-779519a9bc21-40674004251-1`；临时 Maven 根 `https://qsxs.github.io/cpf-maven/`（[实际根 POM](https://qsxs.github.io/cpf-maven/io/github/qsxs/cpf/colorpicker/colorpicker-compose/1.2.0-cpf11-preview-779519a9bc21-40674004251-1/colorpicker-compose-1.2.0-cpf11-preview-779519a9bc21-40674004251-1.pom)）。
+
+| 已验工作流 | 本次输入 | 运行 |
+| --- | --- | --- |
+| [producer 历史源码](https://github.com/qsxs/cpf-port-tooling/blob/abadbfb0b5c33b35dfafdb966e8e759276c5de45/.github/workflows/colorpicker-producer.yml) | `colorpicker_sha=779519a9bc21278c9496a11c43828dc194cbe64c` | [40674004251/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40674004251/attempts/1) |
+| [consumer 历史源码](https://github.com/qsxs/cpf-port-tooling/blob/abadbfb0b5c33b35dfafdb966e8e759276c5de45/.github/workflows/colorpicker-consumer.yml) | `version=1.2.0-cpf11-preview-779519a9bc21-40674004251-1`、`source_sha=779519a9bc21278c9496a11c43828dc194cbe64c` | [40676245219/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40676245219/attempts/1) |
+
+两次已验工作流的实际提交 B 均为 `abadbfb0b5c33b35dfafdb966e8e759276c5de45`，共享工具内容锁 A 为 `d0cff88fd1ea2e4f08bb4409f1c802cca0c7f285`，两者分别记录。Actions 选择器使用当前分支或标签；重跑前须核对所选 ref 实际指向并记录该次 `github.sha`，不能假定当前分支仍指向历史 B。精确运行历史源码须选择实际指向该提交的可选 ref。Producer 成功时上传验收通过的 staging，并另上传证据；维护者审核后手动发布。重跑产生带新 run id/attempt 的版本，不覆盖已验版本。
+
+[Pages 制品提交 `af5af74fb640`](https://github.com/qsxs/cpf-maven/commit/af5af74fb6409cb9d2bc165253594e583ac8c4c2) 的 140 个文件、606,736 字节与 staging 经匿名 HTTP 逐字节对齐。Producer 编译全部 21 份原源，x64/arm64 各核验 53 个不同 API 名称：Native metadata 签名检查 50 个名称，另外检查 8 个枚举生成成员的 Native IR 签名；三个目标均验证实际使用的原有 Compose 和 serialization 两个 `2.4.20-0.1.0-08` 编译器插件，Compose runtime/foundation/ui 库依赖仍为 `implementation`。
+
+Consumer 使用 Gradle 9.5.0 以公开根 GAV 经 GMM 完成 metadata、OHOS x64 和 arm64 真实编译；唯一探针覆盖 `HsvColorPicker` 的 `initialColor`/`onColorChanged`、`BrightnessSlider`、`ColorEnvelope.color` 和 `selectByColor(color, true)`。12 个公开对象与 staging 对齐、每次首次请求成功。Gradle 8.11.1 消费、link、runtime、设备和 Android/iOS 回归未运行，App 尚未切换。
+
+审查阶段的 3 个 P1、1 个 P2 及复审 2 个 P2 均在首个云端构建之前修复；上述 producer 和 consumer 均为各自 attempt 1，不是云端重试。本机 Pages 字节核对有 4 条 curl stderr 出现超时，但最终均退出 0 且哈希匹配；云 consumer 的 12 次公开请求均首次成功。

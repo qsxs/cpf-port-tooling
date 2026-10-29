@@ -1,0 +1,81 @@
+name: Anonymous Material Icons Pages consumer
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: 'producer 使用的完整 40 位源码提交 SHA'
+        required: true
+        type: string
+      version:
+        description: '已人工发布到 Pages 的不可变 preview version'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: controlled-material-icons
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  consumer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Initialize fresh workflow diagnostics
+        id: diagnostics
+        shell: bash
+        env:
+          OUTPUT: ${{ runner.temp }}/material-icons-consumer-${{ github.run_id }}-${{ github.run_attempt }}
+          CI_TOOLING_SHA: ${{ github.sha }}
+          CI_RUN_ID: ${{ github.run_id }}
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -o noclobber
+          mkdir "$OUTPUT"
+          mkdir "$OUTPUT/evidence"
+          printf 'workflow=%s\nrun=%s\nattempt=%s\n' "$CI_TOOLING_SHA" "$CI_RUN_ID" "$CI_RUN_ATTEMPT" > "$OUTPUT/evidence/workflow-context.txt"
+      - name: Validate source and version
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] || { printf '%s\n' 'A full lowercase source commit is required' >&2; exit 1; }
+          [[ "$VERSION" =~ ^1\.7\.3-cpf11-preview-${SOURCE_SHA:0:12}-[1-9][0-9]*-[1-9][0-9]*$ ]] || { printf '%s\n' 'Version must match the source and producer run' >&2; exit 1; }
+      - name: Checkout consumer tooling only
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: tooling
+          persist-credentials: false
+      - name: Set up JDK 17
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Python 3.13
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: Resolve public graph and compile metadata and OHOS consumers
+        shell: bash
+        env:
+          ICONS_SOURCE_SHA: ${{ inputs.source_sha }}
+          ICONS_VERSION: ${{ inputs.version }}
+          ICONS_CONSUMER_OUTPUT: ${{ runner.temp }}/material-icons-consumer-${{ github.run_id }}-${{ github.run_attempt }}
+          CI_TOOLING_SHA: ${{ github.sha }}
+          CI_RUN_ID: ${{ github.run_id }}
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: python -B tooling/scripts/material_icons_remote_consumer.py
+      - name: Upload bounded consumer evidence
+        if: ${{ always() && steps.diagnostics.outcome == 'success' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: material-icons-consumer-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/material-icons-consumer-${{ github.run_id }}-${{ github.run_attempt }}/evidence/
+          if-no-files-found: warn
+          retention-days: 14

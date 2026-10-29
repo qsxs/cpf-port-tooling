@@ -210,3 +210,12 @@ io.github.qsxs.cpf.filekit:filekit-dialogs:0.16.0-cpf11-preview-22683094fd5d-408
 [consumer 40881058391/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40881058391/attempts/1) 已成功，使用 workflow `c4433b0c58150fafaa47696a6a72bc334e1d9d9b`、Gradle 8.11.1、JDK 17 和 Kotlin 2.4.20-0.1.0-08；source、version 与 producer fingerprint `9b6d8d85d7cb6b6ce547b55ae699f5a930433a87ce6e15b66bba96fecc6fb80c` 一致。Metadata、OHOS x64 和 arm64 三个任务实际执行成功；两个 ABI 分别选取对应平台的 core/dialogs KLIB，并核实 dialogs → core 传递边。49 次匿名请求均为 HTTP 200，其中归档的 36 份元数据可独立复核哈希；证据 ZIP 未包含编译输出二进制，不能独立重哈这些输出。
 
 旧 P4 的完整 63 项矩阵、D019 内部短写计数、D022 原子回执及分享 drain、K3、其余 HEIC/图像矩阵和物理 ARM 等仍待验；P6 分享仍暂缓且非 PASS，OHOS 文件业务暂为 UTF-8，GBK 与共享 CSV 模板兼容延期。探针只覆盖 picker/readBytes、三参 init/session、saver、source/sink、两种压缩重载和 shareFile 调用的编译，不证明运行行为。consumer 收据中的 link、runtime、device、armDevice 和 ArkTS 编译均为 NOT_RUN。Android/iOS 平台及主工程 Gradle 门禁本次未验证；Android/iOS 和系统 SDK 不变，App 引用尚未切换。
+
+
+## Material Icons 1.7.3 鸿蒙迁仓预览
+
+- 上游 Fork：`qsxs/compose-multiplatform-core`，源码提交 `17eb10c7c46658be710f1bdc543aa9f85c96563e`；对应 Maven 官方 source JAR 和 Git tag 是分别固定的来源，生成图标与 tag 的逐项一致性尚未证明。
+- 公开 Maven 根：`https://qsxs.github.io/cpf-maven/`；两个模块 group 为 `io.github.qsxs.cpf.materialicons`，同版 `1.7.3-cpf11-preview-17eb10c7c466-40908810417-1`。extended 的公开 API 依赖同版 core。
+- [producer 40908810417/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40908810417/attempts/1) 使用 Gradle 9.5.0、JDK 17 和 Kotlin `2.4.20-0.1.0-08`，metadata、OHOS x64/arm64、Publish 和 Verify 均通过；完整源码 281/11105 与五组大小写映射已核。
+- [Pages 提交 8eeacfbd8956](https://github.com/qsxs/cpf-maven/commit/8eeacfbd8956e372deae09ca4f3e75280e92b567) 的 280 个文件来自已核 staging；公开六份 GMM 和两份根 sources JAR 与 staging 匿名校验一致。extended sources 在整包下载中断后以 47 个区间、129 次请求组装并确认 SHA-256。
+- [consumer 40915070575/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40915070575/attempts/1) 以 extended 根坐标传递解析同版 core，实际完成 metadata、OHOS x64 与 arm64 编译；14 次匿名元数据请求和选中制品摘要与 staging 匹配。证据不含 runner 输出二进制，不能独立重哈；link、runtime、物理 ARM 及 Android/iOS 回归未验证，主工程引用尚未切换。

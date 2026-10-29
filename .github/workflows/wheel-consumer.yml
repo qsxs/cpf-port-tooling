@@ -10,7 +10,7 @@ on:
       source_sha:
         description: '对应 producer 的完整 40 位 Wheel source SHA'
         required: true
-        default: 'e73ecdbb9a38897c7e5cc47467bf1197a076191a'
+        default: '18ea344423c94bff10c4bf7c43d1bbd408efafc9'
         type: string
 
 permissions:

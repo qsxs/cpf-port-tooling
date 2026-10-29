@@ -293,7 +293,7 @@ def main():
                 "--native-home", str(native), "--tooling", str(tools)]
         plan = json.loads(run("Plan", [*cli, "Plan", *args]))
         fingerprint, version = plan["fingerprint"], plan["version"]
-        if (plan.get("sourceCommit") != source or plan.get("toolingCommit") != TOOL_REVISION or
+        if (plan.get("sourceCommit") != source or plan.get("expectedToolingCommit") != TOOL_REVISION or
                 not re.fullmatch(r"[0-9a-f]{64}", fingerprint) or
                 not version.endswith("-" + source[:12] + "-" + run_id + "-" + attempt)):
             raise RuntimeError("FileKit plan identity differs")

@@ -193,3 +193,20 @@ Gradle 8 消费、link、runtime、设备和 Android/iOS 回归未验证，App �
 [Pages 提交 `b826affc3704`](https://github.com/qsxs/cpf-maven/commit/b826affc370404ecedcd1b5fca418ad5eeae3940) 的 140 个文件、1,246,983 字节与 staging 匿名核对 140/140 一致，零重试。 [consumer 40841841344/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40841841344/attempts/1) 使用 workflow `0862e8096aede7971366ae568f1e53a3dc108b3e` 和 Gradle 9.5.0，仅直接依赖 Wheel 根，在 metadata、OHOS x64 和 arm64 中传递解析 Wheel→Lyricist→core，并实际编译 `WheelDatePicker`、`WheelDateTimePicker`、`timeFormatter` 与回调探针。66 条匿名 HTTP 记录与 staging 对齐；其中 57 条响应 body 随证据上传并可本机复哈，另 9 条仅保留 runner 记录。
 
 Producer 未记录或上传完整 compiler argv 与 taskDependencies；consumer 转换后的 metadata Klib 和 runner 物理输入未上传，不能在本机独立重哈。Gradle 8 消费、link、runtime、设备及 Android/iOS 回归未验证，App 引用尚未切换；用户未授权移除 Lyricist 依赖。
+
+## FileKit 0.16.0 OHOS（consumer 三目标编译已验）
+
+[producer 40864370116/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40864370116/attempts/1) 使用 FileKit source `22683094fd5d30ef08441d073c797161804b9dc4` 和工作流 `e0116f36d402498b7a7fa2a6a37397ee5ec5b467`，完成 Metadata、OHOS x64/arm64、Publish 和 Verify；这些结果仅针对该次 producer。Metadata 的 LLVM 下载曾出现 EOF，重试后最终成功，不能将全部构建耗时归因于该下载问题。
+
+两根 GAV 使用同一预览版本：
+
+```text
+io.github.qsxs.cpf.filekit:filekit-core:0.16.0-cpf11-preview-22683094fd5d-40864370116-1
+io.github.qsxs.cpf.filekit:filekit-dialogs:0.16.0-cpf11-preview-22683094fd5d-40864370116-1
+```
+
+[Pages 源提交 `60752c680a23`](https://github.com/qsxs/cpf-maven/commit/60752c680a23322f8af23d9370677cb077011d31) 的 285 个文件、1,464,278 字节经匿名 HTTP 核对 285/285 与 staging 一致。dialogs 根同版 `arkts-sources@zip` 仅含 `FileKitShareFactory.ets`；上游与社区两份 MIT 许可均保留。
+
+[consumer 40881058391/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40881058391/attempts/1) 已成功，使用 workflow `c4433b0c58150fafaa47696a6a72bc334e1d9d9b`、Gradle 8.11.1、JDK 17 和 Kotlin 2.4.20-0.1.0-08；source、version 与 producer fingerprint `9b6d8d85d7cb6b6ce547b55ae699f5a930433a87ce6e15b66bba96fecc6fb80c` 一致。Metadata、OHOS x64 和 arm64 三个任务实际执行成功；两个 ABI 分别选取对应平台的 core/dialogs KLIB，并核实 dialogs → core 传递边。49 次匿名请求均为 HTTP 200，其中归档的 36 份元数据可独立复核哈希；证据 ZIP 未包含编译输出二进制，不能独立重哈这些输出。
+
+旧 P4 的完整 63 项矩阵、D019 内部短写计数、D022 原子回执及分享 drain、K3、其余 HEIC/图像矩阵和物理 ARM 等仍待验；P6 分享仍暂缓且非 PASS，OHOS 文件业务暂为 UTF-8，GBK 与共享 CSV 模板兼容延期。探针只覆盖 picker/readBytes、三参 init/session、saver、source/sink、两种压缩重载和 shareFile 调用的编译，不证明运行行为。consumer 收据中的 link、runtime、device、armDevice 和 ArkTS 编译均为 NOT_RUN。Android/iOS 平台及主工程 Gradle 门禁本次未验证；Android/iOS 和系统 SDK 不变，App 引用尚未切换。

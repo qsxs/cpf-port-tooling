@@ -6,7 +6,7 @@ on:
       wheel_sha:
         description: 'qsxs/compose-datetime-wheel-picker 不可变的完整 40 位提交 SHA'
         required: true
-        default: 'c5f24924113f8ae32949cda20e33fcfd71380315'
+        default: 'e73ecdbb9a38897c7e5cc47467bf1197a076191a'
         type: string
 
 permissions:

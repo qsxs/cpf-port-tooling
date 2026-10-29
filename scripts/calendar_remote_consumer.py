@@ -408,6 +408,7 @@ pluginManagement {
         id("org.jetbrains.kotlin.multiplatform") version "2.4.20-0.1.0-08"
         id("org.jetbrains.kotlin.plugin.compose") version "2.4.20-0.1.0-08"
         id("org.jetbrains.kotlin.plugin.serialization") version "2.4.20-0.1.0-08"
+        id("org.jetbrains.compose") version "1.12.0-0.1.0-11"
     }
 }
 val tools = file(providers.gradleProperty("consumerTools").get())
@@ -454,6 +455,7 @@ plugins {
     kotlin("multiplatform")
     kotlin("plugin.compose")
     kotlin("plugin.serialization")
+    id("org.jetbrains.compose")
 }
 fun readMap(file: File): Map<String, Any?> = (JsonSlurper().parse(file) as Map<*, *>).entries.associate { it.key.toString() to it.value }
 fun asMap(value: Any?): Map<String, Any?> = (value as Map<*, *>).entries.associate { it.key.toString() to it.value }

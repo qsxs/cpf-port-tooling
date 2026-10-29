@@ -1,0 +1,101 @@
+name: Controlled FileKit OHOS producer
+
+on:
+  workflow_dispatch:
+    inputs:
+      filekit_sha:
+        description: 'qsxs/FileKit 已审查的完整 40 位提交 SHA'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: controlled-filekit-producer
+  cancel-in-progress: false
+
+jobs:
+  producer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Initialize fresh workflow diagnostics
+        id: diagnostics
+        shell: bash
+        env:
+          FILEKIT_PRODUCER_OUTPUT: ${{ runner.temp }}/filekit-producer-${{ github.run_id }}-${{ github.run_attempt }}
+          CI_RUN_ID: ${{ github.run_id }}
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+          CI_TOOLING_SHA: ${{ github.sha }}
+        run: |
+          set -o noclobber
+          mkdir "$FILEKIT_PRODUCER_OUTPUT"
+          mkdir "$FILEKIT_PRODUCER_OUTPUT/evidence"
+          printf 'workflow=%s\nrun=%s\nattempt=%s\n' "$CI_TOOLING_SHA" "$CI_RUN_ID" "$CI_RUN_ATTEMPT" > "$FILEKIT_PRODUCER_OUTPUT/evidence/workflow-context.txt"
+      - name: Validate immutable source
+        shell: bash
+        env:
+          FILEKIT_SHA: ${{ inputs.filekit_sha }}
+          FILEKIT_PRODUCER_OUTPUT: ${{ runner.temp }}/filekit-producer-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -o noclobber
+          [[ "$FILEKIT_SHA" =~ ^[0-9a-f]{40}$ ]] || { printf '%s\n' 'A full FileKit source commit is required' >&2; exit 1; }
+          printf 'source=%s\n' "$FILEKIT_SHA" > "$FILEKIT_PRODUCER_OUTPUT/evidence/source.txt"
+      - name: Checkout workflow tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: tooling
+          persist-credentials: false
+      - name: Checkout FileKit source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: qsxs/FileKit
+          ref: ${{ inputs.filekit_sha }}
+          path: filekit
+          persist-credentials: false
+      - name: Checkout locked runtime tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: qsxs/cpf-port-tooling
+          ref: d0cff88fd1ea2e4f08bb4409f1c802cca0c7f285
+          path: locked-tools
+          persist-credentials: false
+      - name: Set up JDK 17
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Python 3.13
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: Build and verify isolated staging
+        shell: bash
+        env:
+          FILEKIT_SHA: ${{ inputs.filekit_sha }}
+          FILEKIT_CHECKOUT: ${{ github.workspace }}/filekit
+          FILEKIT_LOCKED_TOOLS: ${{ github.workspace }}/locked-tools
+          FILEKIT_PRODUCER_OUTPUT: ${{ runner.temp }}/filekit-producer-${{ github.run_id }}-${{ github.run_attempt }}
+          CI_RUN_ID: ${{ github.run_id }}
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+          CI_TOOLING_SHA: ${{ github.sha }}
+        run: python -B tooling/scripts/filekit_producer.py
+      - name: Upload verified Maven staging for manual review
+        if: success()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: filekit-maven-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/filekit-producer-${{ github.run_id }}-${{ github.run_attempt }}/staging/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+      - name: Upload bounded producer evidence
+        if: ${{ always() && steps.diagnostics.outcome == 'success' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: filekit-producer-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/filekit-producer-${{ github.run_id }}-${{ github.run_attempt }}/evidence/
+          if-no-files-found: warn
+          retention-days: 14

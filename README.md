@@ -219,3 +219,21 @@ io.github.qsxs.cpf.filekit:filekit-dialogs:0.16.0-cpf11-preview-22683094fd5d-408
 - [producer 40908810417/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40908810417/attempts/1) 使用 Gradle 9.5.0、JDK 17 和 Kotlin `2.4.20-0.1.0-08`，metadata、OHOS x64/arm64、Publish 和 Verify 均通过；完整源码 281/11105 与五组大小写映射已核。
 - [Pages 提交 8eeacfbd8956](https://github.com/qsxs/cpf-maven/commit/8eeacfbd8956e372deae09ca4f3e75280e92b567) 的 280 个文件来自已核 staging；公开六份 GMM 和两份根 sources JAR 与 staging 匿名校验一致。extended sources 在整包下载中断后以 47 个区间、129 次请求组装并确认 SHA-256。
 - [consumer 40915070575/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40915070575/attempts/1) 以 extended 根坐标传递解析同版 core，实际完成 metadata、OHOS x64 与 arm64 编译；14 次匿名元数据请求和选中制品摘要与 staging 匹配。证据不含 runner 输出二进制，不能独立重哈；link、runtime、物理 ARM 及 Android/iOS 回归未验证，主工程引用尚未切换。
+
+## Coil 3.3.0 鸿蒙独立预览
+
+- [源码 Fork](https://github.com/qsxs/coil/tree/codex/ohos-kotlin-2.4)，实际构建提交
+  `0e0e3189f9205c57f82efd96065211ceb333f205`；官方上游 tag `3.3.0`，CPF 发布源码包与
+  CPF 官方分支固定提交 `bfa7e50a18875b75b66c3879408c84916aec9f3c` 的 145 个原始源码 blob
+  一致。发布包的实际构建提交仍未知；已批准的单文件 JvmName 删除仅作用于鸿蒙覆盖。
+- 临时 Maven 根为 `https://qsxs.github.io/cpf-maven/`，group 为 `io.github.qsxs.cpf.coil`，
+  七个模块 `coil`、`coil-core`、`coil-compose`、`coil-compose-core`、`coil-network-core`、
+  `coil-network-ktor3`、`coil-svg` 共用版本 `3.3.0-cpf11-preview-0e0e3189f920-40997275438-1`。
+- [producer 40997275438/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/40997275438/attempts/1)
+  完成七模块 metadata 和 OHOS x64/arm64 编译及发布。独立审查核对 21 个组件、665 个文件、
+  435 个源码包成员和 542 个 KLIB 成员；21 份公开 GMM 与 staging 一致。
+- [consumer 41000005970/1](https://github.com/qsxs/cpf-port-tooling/actions/runs/41000005970/attempts/1)
+  采用 Gradle 9.5.0 和 Skia，从 compose、network-ktor3、svg 三个根坐标传递解析全部七模块，
+  实际完成 metadata 与双 ABI 编译；两个 Native 编译器读取的各 7 个 KLIB 摘要与公开制品一致。
+- 新制品的最终链接、x64 运行、ARM64 真机、Gradle 8.11.1 消费和 Android/iOS 回归均未执行；
+  consumer 输出二进制未上传，不能独立复哈。旧 P3 的运行结果只适用于旧制品，主工程依赖未切换。

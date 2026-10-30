@@ -72,8 +72,8 @@ jobs:
           OUTPUT: ${{ runner.temp }}/coil-consumer-${{ github.run_id }}-${{ github.run_attempt }}
         run: |
           set -euo pipefail
-          python -B locked-tools/toolchains/kotlin-native/2.4.20-0.1.0-08/bootstrap-native.py \
-            --destination "$OUTPUT/native" --kotlin-version 2.4.20-0.1.0-08
+          python -B tooling/scripts/coil_native_bootstrap.py --locked-tools locked-tools \
+            --destination "$OUTPUT/native"
       - name: Verify anonymous graph and compile consumer
         shell: bash
         env:
@@ -90,6 +90,7 @@ jobs:
           name: coil-consumer-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             ${{ runner.temp }}/coil-consumer-${{ github.run_id }}-${{ github.run_attempt }}/workflow-context.txt
+            ${{ runner.temp }}/coil-consumer-${{ github.run_id }}-${{ github.run_attempt }}/native/download-receipt.json
             ${{ runner.temp }}/coil-consumer-${{ github.run_id }}-${{ github.run_attempt }}/native/bootstrap-receipt.json
             ${{ runner.temp }}/coil-consumer-${{ github.run_id }}-${{ github.run_attempt }}/consumer-output/evidence/
           if-no-files-found: warn

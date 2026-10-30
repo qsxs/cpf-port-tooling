@@ -31,6 +31,12 @@ jobs:
           [[ "$COIL_SHA" =~ ^[0-9a-f]{40}$ ]]
           mkdir "$OUTPUT"
           printf 'source=%s\ntooling=%s\n' "$COIL_SHA" "$TOOLING_SHA" > "$OUTPUT/workflow-context.txt"
+      - name: Checkout workflow tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: tooling
+          persist-credentials: false
       - name: Checkout Coil source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -60,8 +66,8 @@ jobs:
           OUTPUT: ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}
         run: |
           set -euo pipefail
-          python -B locked-tools/toolchains/kotlin-native/2.4.20-0.1.0-08/bootstrap-native.py \
-            --destination "$OUTPUT/native" --kotlin-version 2.4.20-0.1.0-08
+          python -B tooling/scripts/coil_native_bootstrap.py --locked-tools locked-tools \
+            --destination "$OUTPUT/native"
       - name: Build and verify seven-module staging
         shell: bash
         env:
@@ -90,6 +96,7 @@ jobs:
           name: coil-producer-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}/workflow-context.txt
+            ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}/native/download-receipt.json
             ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}/native/bootstrap-receipt.json
             ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}/work/identity.json
             ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}/work/evidence/

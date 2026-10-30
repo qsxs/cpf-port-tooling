@@ -187,9 +187,26 @@ fun record(name: String, taskName: String, target: String) {
             val sources = task.sources.files.filter { it.isFile && it.extension == "kt" }
             val outputs = task.outputs.files.files.flatMap(::leaves).filter { it.length() > 0 }
             check(task.enabled && task.state.executed && !task.state.noSource && task.state.failure == null && sources.size == 1 && outputs.isNotEmpty())
+            val nativeTrace = if (target == "common") emptyList() else {
+                val configurationName = if (target == "ohos_x64") "ohosX64CompileKlibraries" else "ohosArm64CompileKlibraries"
+                val published = configurations.getByName(configurationName).incoming.artifacts.artifacts.filter {
+                    val id = it.id.componentIdentifier
+                    id is ModuleComponentIdentifier && id.group == groupName
+                }
+                val compilerFiles = task.libraries.files.filter { it.isFile }
+                check(published.size == modules.size)
+                published.map { artifact ->
+                    val hash = sha(artifact.file)
+                    val matches = compilerFiles.filter { it.length() == artifact.file.length() && sha(it) == hash }
+                    check(matches.size == 1) { "Compiler input does not uniquely match published Coil artifact: ${artifact.id}" }
+                    mapOf("artifact" to artifact.id.componentIdentifier.displayName, "sha256" to hash,
+                        "compilerPath" to matches.single().absolutePath)
+                }
+            }
             writeEvidence(name, mapOf("task" to task.path, "target" to target,
                 "sources" to sources.map { mapOf("path" to it.absolutePath, "sha256" to sha(it)) },
                 "outputs" to outputs.map { mapOf("path" to it.absolutePath, "sha256" to sha(it), "size" to it.length()) },
+                "nativeCompilerTrace" to nativeTrace, "metadataCompilerTrace" to "NOT_INSPECTED",
                 "link" to "NOT_RUN", "runtime" to "NOT_RUN"))
         }
     }

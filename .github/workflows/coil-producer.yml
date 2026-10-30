@@ -101,5 +101,6 @@ jobs:
             ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}/work/identity.json
             ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}/work/evidence/
             ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}/work/logs/
+            ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}/work/build/*/metadata-cli/commonMain/producer.json
           if-no-files-found: warn
           retention-days: 14

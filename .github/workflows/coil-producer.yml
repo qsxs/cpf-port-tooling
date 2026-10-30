@@ -1,0 +1,98 @@
+name: Controlled Coil OHOS producer
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: 'qsxs/coil 已审查的 40 位提交 SHA'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: controlled-coil-producer
+  cancel-in-progress: false
+
+jobs:
+  producer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Prepare run identity
+        shell: bash
+        env:
+          COIL_SHA: ${{ inputs.source_sha }}
+          OUTPUT: ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}
+          TOOLING_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$COIL_SHA" =~ ^[0-9a-f]{40}$ ]]
+          mkdir "$OUTPUT"
+          printf 'source=%s\ntooling=%s\n' "$COIL_SHA" "$TOOLING_SHA" > "$OUTPUT/workflow-context.txt"
+      - name: Checkout Coil source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: qsxs/coil
+          ref: ${{ inputs.source_sha }}
+          path: coil
+          persist-credentials: false
+      - name: Checkout locked native tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: qsxs/cpf-port-tooling
+          ref: d0cff88fd1ea2e4f08bb4409f1c802cca0c7f285
+          path: locked-tools
+          persist-credentials: false
+      - name: Set up JDK 17
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Python 3.13
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: Bootstrap fixed Native compiler
+        shell: bash
+        env:
+          OUTPUT: ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          python -B locked-tools/toolchains/kotlin-native/2.4.20-0.1.0-08/bootstrap-native.py \
+            --destination "$OUTPUT/native" --kotlin-version 2.4.20-0.1.0-08
+      - name: Build and verify seven-module staging
+        shell: bash
+        env:
+          COIL_SHA: ${{ inputs.source_sha }}
+          OUTPUT: ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          python -B coil/ohos/Build.py --source-sha "$COIL_SHA" --run-id "$RUN_ID" \
+            --run-attempt "$RUN_ATTEMPT" --work "$OUTPUT/work" \
+            --native-home "$OUTPUT/native/kotlin-native-prebuilt-linux-x86_64-2.4.20-0.1.0-08"
+      - name: Upload verified Maven staging
+        if: success()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coil-maven-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}/work/maven/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+      - name: Upload producer evidence and logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coil-producer-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}/workflow-context.txt
+            ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}/native/bootstrap-receipt.json
+            ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}/work/identity.json
+            ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}/work/evidence/
+            ${{ runner.temp }}/coil-producer-${{ github.run_id }}-${{ github.run_attempt }}/work/logs/
+          if-no-files-found: warn
+          retention-days: 14

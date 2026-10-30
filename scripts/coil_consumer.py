@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import time
 from urllib.parse import urljoin
+import urllib.error
 import urllib.request
 
 PAGES = "https://qsxs.github.io/cpf-maven/"
@@ -99,6 +100,7 @@ fun sha(file: File) = MessageDigest.getInstance("SHA-256").digest(file.readBytes
 fun leaves(file: File): List<File> = if (file.isDirectory) file.walkTopDown().filter(File::isFile).toList() else if (file.isFile) listOf(file) else emptyList()
 val groupName = "io.github.qsxs.cpf.coil"
 val versionName = providers.gradleProperty("coilVersion").get()
+val attempt = providers.gradleProperty("consumerAttempt").get()
 val output = file(providers.gradleProperty("consumerOutput").get())
 val graph = readMap(file("http-graph.json"))
 val pins = readMap(file("pins.json"))
@@ -132,7 +134,7 @@ configurations.configureEach {
     }
 }
 fun writeEvidence(name: String, value: Any) {
-    val file = output.resolve("evidence/$name.json")
+    val file = output.resolve("evidence/$name-attempt-$attempt.json")
     file.parentFile.mkdirs()
     check(!file.exists())
     file.writeText(JsonOutput.prettyPrint(JsonOutput.toJson(value)) + "\n")
@@ -199,7 +201,8 @@ record("recordConsumerArm64", "compileKotlinOhosArm64", "ohos_arm64")
 
 
 def get(url):
-    for attempt in range(1, 7):
+    attempt = 1
+    while True:
         try:
             request = urllib.request.Request(url, headers={"User-Agent": "cpf-coil-public-consumer"})
             with urllib.request.urlopen(request, timeout=60) as response:
@@ -207,10 +210,25 @@ def get(url):
                 if response.status != 200 or len(data) > 2_000_000:
                     raise RuntimeError("Public metadata response invalid")
                 return data
-        except Exception:
-            if attempt == 6:
+        except urllib.error.HTTPError as error:
+            if error.code not in (429, 500, 502, 503, 504):
                 raise
-            time.sleep(min(attempt * 2, 10))
+        except (urllib.error.URLError, TimeoutError, ConnectionError):
+            pass
+        print("公开元数据请求暂时失败，重试次数：" + str(attempt), flush=True)
+        time.sleep(min(attempt * 2, 30))
+        attempt += 1
+
+
+def transient_network_failure(text):
+    retryable = ("connect timed out", "read timed out", "connection reset", "connection refused",
+                 "temporary failure in name resolution", "remote host terminated the handshake",
+                 "status code 429", "status code 500", "status code 502", "status code 503", "status code 504")
+    if "* What went wrong:" not in text:
+        return False
+    failure = text.rsplit("* What went wrong:", 1)[-1].split("* Try:", 1)[0].lower()
+    nonretryable = ("compilation error", "compilation failed", "unresolved reference", "could not find", "checksum mismatch")
+    return not any(reason in failure for reason in nonretryable) and any(reason in failure for reason in retryable)
 
 
 def graph(version, cfg):
@@ -291,14 +309,23 @@ def main():
     env["GRADLE_USER_HOME"] = str(output / "gradle-home")
     env["KONAN_DATA_DIR"] = str(output / "konan")
     for task in ("resolveConsumer", "recordConsumerMetadata", "recordConsumerX64", "recordConsumerArm64"):
-        print("执行 " + task, flush=True)
-        cmd = [str(project / "gradlew"), "-PcoilVersion=" + version, "-PconsumerOutput=" + str(output),
-               "-Pkotlin.native.home=" + str(native), "--project-cache-dir", str(output / "project-cache"), "--console=plain", task]
-        with (output / "evidence" / (task + ".log")).open("x", encoding="utf-8") as log:
-            process = subprocess.run(cmd, cwd=project, env=env, stdout=log, stderr=subprocess.STDOUT, check=False)
-        print(task + " exit=" + str(process.returncode), flush=True)
-        if process.returncode:
-            raise RuntimeError("Consumer stage failed: " + task)
+        attempt = 1
+        while True:
+            print("执行 " + task + "，第 " + str(attempt) + " 次", flush=True)
+            cmd = [str(project / "gradlew"), "-PcoilVersion=" + version, "-PconsumerOutput=" + str(output),
+                   "-PconsumerAttempt=" + str(attempt), "-Pkotlin.native.home=" + str(native),
+                   "--project-cache-dir", str(output / "project-cache"), "--console=plain", task]
+            log_path = output / "evidence" / (task + ".attempt-" + str(attempt) + ".log")
+            with log_path.open("x", encoding="utf-8") as log:
+                process = subprocess.run(cmd, cwd=project, env=env, stdout=log, stderr=subprocess.STDOUT, check=False)
+            print(task + " exit=" + str(process.returncode), flush=True)
+            if process.returncode == 0:
+                break
+            if not transient_network_failure(log_path.read_text(encoding="utf-8", errors="replace")):
+                raise RuntimeError("Consumer stage failed: " + task)
+            print("消费依赖传输暂时失败，保留本轮缓存与日志后重试：" + task, flush=True)
+            time.sleep(min(attempt * 2, 30))
+            attempt += 1
     write(output / "evidence/result.json", json.dumps({"sourceSha": source_sha, "version": version,
           "metadata": "PASS", "ohosX64": "PASS", "ohosArm64": "PASS", "link": "NOT_RUN", "runtime": "NOT_RUN"}, indent=2) + "\n")
 

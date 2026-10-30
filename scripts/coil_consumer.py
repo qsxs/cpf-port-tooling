@@ -170,12 +170,14 @@ fun selected(configurationName: String, target: String): List<Map<String, Any>> 
 tasks.register("resolveConsumer") {
     doLast {
         check(gradle.gradleVersion == "9.5.0" && System.getProperty("java.specification.version") == "17")
+        check(providers.gradleProperty("rendererBackend").get() == "skia")
         val direct = configurations.getByName("commonMainImplementation").dependencies.filter { it.group == groupName }
         check(direct.map { it.name }.toSet() == directModules.toSet() && direct.all { it.version == versionName })
         selected("commonMainResolvableDependenciesMetadata", "common")
         selected("ohosX64CompileKlibraries", "ohos_x64")
         selected("ohosArm64CompileKlibraries", "ohos_arm64")
-        writeEvidence("consumer-resolution", mapOf("directModules" to directModules, "link" to "NOT_RUN", "runtime" to "NOT_RUN"))
+        writeEvidence("consumer-resolution", mapOf("directModules" to directModules,
+            "rendererBackend" to providers.gradleProperty("rendererBackend").get(), "link" to "NOT_RUN", "runtime" to "NOT_RUN"))
     }
 }
 fun record(name: String, taskName: String, target: String) {
@@ -316,7 +318,8 @@ def main():
     write(project / "http-graph.json", json.dumps(public_graph, indent=2) + "\n")
     write(project / "settings.gradle.kts", SETTINGS)
     write(project / "build.gradle.kts", BUILD)
-    write(project / "gradle.properties", (recipe / "gradle.properties").read_text(encoding="utf-8"))
+    properties = (recipe / "gradle.properties").read_text(encoding="utf-8").rstrip() + "\nrendererBackend=skia\n"
+    write(project / "gradle.properties", properties)
     write(project / "src/commonMain/kotlin/CoilConsumer.kt", PROBE)
     shutil.copyfile(recipe / "dependency-pins.json", project / "pins.json")
     shutil.copyfile(recipe / "metadata-pins.json", project / "metadata-pins.json")
